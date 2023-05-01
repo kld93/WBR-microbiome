@@ -1,8 +1,8 @@
 # WBR-microbiome
 
-"Are there differences between microbial communities on woodchip surfaces and woodchip interiors within woodchip bioreactors?"
+## "Are there differences between microbial communities on woodchip surfaces and woodchip interiors within woodchip bioreactors?"
 
-Authors: Katie L. Duggan*, James P. Shapleigh, John M. Regan, Matthew C. Reid, M. Todd Walter
+#### Authors: Katie L. Duggan*, James P. Shapleigh, John M. Regan, Matthew C. Reid, M. Todd Walter
 
 *Cornell University Biological & Environmental Engineering; kld93@cornell.edu
 
@@ -26,5 +26,5 @@ Sample name key:
 - G = "ground" (aka milled)
 - "trim_cut" indicates these are the samples exported from KBase AFTER cleaning/trimming steps
 
-
+To download the samples, head to the [KBase narrative](https://kbase.us/n/145686/4/) and see the "Export Cleaned/Trimmed Samples" section.
 

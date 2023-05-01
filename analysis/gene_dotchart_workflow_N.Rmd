@@ -1,0 +1,125 @@
+---
+title: "Denitrifying (N) Gene Presence in Milled vs Unmilled Woodchips"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Files needed:
+
+- "Woodchip_readVrefs_N.csv" (output from DIAMOND - copied readVrefs file into csv)
+- "annotation_map.csv" (created by Jim for denitrifying genes)
+- "Woodchip_metadata_N.csv" (total read counts for each sample; read from KBase)
+
+## Load packages & set directory
+```{r, include=FALSE}
+library(tidyverse)
+
+setwd("C:/github/WBR-microbiome")
+```
+
+## Making the plot
+
+### Read in the DIAMOND output data
+```{r}
+dia_Ncycle.df = read_csv("C:/github/WBR-microbiome/data/N/Woodchip_readVrefs_N.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+```
+
+### Correct the sample IDs
+```{r}
+dia_Ncycle.df_correct <- dia_Ncycle.df %>% 
+  mutate(fn = ifelse(fn == "./7G.out.daa", "sample7G", fn)) %>% 
+  mutate(fn = ifelse(fn == "./8W.out.daa", "sample8W", fn)) %>%
+  mutate(fn = ifelse(fn == "./9G.out.daa", "sample9G", fn)) %>%
+  mutate(fn = ifelse(fn == "./10W.out.daa", "sample10W", fn)) %>%
+  mutate(fn = ifelse(fn == "./11G.out.daa", "sample11G", fn)) %>%
+  mutate(fn = ifelse(fn == "./12W.out.daa", "sample12W", fn))
+```
+
+### Read in the annotation map for denitrifying genes
+```{r}
+ann.df = read_csv("C:/github/WBR-microbiome/data/N/annotation_map.csv", col_types = "cc", col_names = c("gene","subject"))
+```
+
+### Read in the metadata (i.e., read counts)
+```{r}
+count.df = read_csv("C:/github/WBR-microbiome/data/N/Woodchip_metadata_N.csv") %>%
+  rename(fn = filename)
+```
+
+### Join the three dataframes together
+```{r}
+d = dia_Ncycle.df_correct %>%
+    left_join(ann.df) %>%
+    group_by(fn, gene) %>%
+    summarize(raw.count = n()) %>%
+    left_join(count.df) %>%
+    mutate(norm.count = (raw.count / count) * 1000000) #calculate counts
+```
+
+### Add gene names
+```{r}
+d2.sub = d[d$gene %in% c("Nap", "Nar", "NirK", "NirS", "cNorB", "qNorZ", "NosZ"), ]
+```
+
+### Group by treatment (i.e., "G" for milled, "W" for unmilled)
+```{r}
+d3 = dplyr::group_by(d2.sub,gene, Treatment)
+
+d3.avg = dplyr::summarize(d3, mean = mean(norm.count), sd = sd(norm.count))
+```
+
+### Add a new column with corrected names
+```{r}
+d3.avg$rename = c("cNor", "cNor","Nap", "Nap", "Nar", "Nar", "NirK", "NirK", "NirS", "NirS", "NosZ", "NosZ", "qNor", "qNor") 
+```
+
+### Put genes in order for the facet
+```{r}
+d3.avg$ord = factor(d3.avg$rename, levels=c("Nap","Nar","NirK","NirS","cNor","qNor","NosZ"))
+```
+
+### Remove gene labels on right
+```{r}
+p = ggplot(d3.avg, aes(mean, Treatment)) + geom_point()
+
+p = p +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5))
+
+p = p + facet_grid(ord ~ .)
+
+p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 5)) #add legend position none.
+
+p = p + labs(x = "Reads per million total reads", y = "Treatment")
+  
+p
+```
+
+### Find dimensions of plot in inches
+```{r}
+dev.size("in")
+```
+
+### Plot with appropriate dimensions
+```{r}
+tiff("N_presence_dotchart.tiff", width = 7.2, height = 3.4, units = 'in', res = 150)
+plot(p) # Make plot
+dev.off()
+```
+

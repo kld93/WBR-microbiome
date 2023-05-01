@@ -1,0 +1,213 @@
+---
+title: "Woodchip DNA Sequence Alignment via DIAMOND"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+# DIAMOND Workflow
+
+## Files needed:
+
+- sample files (fastq.gz or fastq)
+- ppk.fa
+- CAZy.fa
+- Ncycle.fa
+
+## Polyphosphate kinase (ppk)
+
+```{bash}
+#use this directory
+mkdir /workdir/jps2
+cd /workdir/jps2/
+mv ~/*.FASTQ.zip ./ (move the sample files to jps2)
+mv ~/ppk.fa ./ (move the .fa file to jps2)
+
+#make ppk.fa database file machine readable
+/programs/diamond-0.9.24/diamond makedb --in ppk.fa -d ppk
+
+#unzip each of the fastq.zip files and rename (example below)
+unzip port2_sample2W_cut_109729_74_1.FASTQ.zip
+mv port2_sample2W_cut_109729_74_1.FASTQ.zip 2W.fastq
+
+#use text editor to create loop for diamond (save as "diamond.sh")
+##may need to change the file type, names, and "64" depending on which core machine you use
+nano
+
+#copy the following code and paste into nano text editor:
+set -e
+set -u
+set -o pipefail
+array=($(ls ./*.fastq)) 
+echo ${array[@]}
+for file in ${array[@]};
+do
+    results="$(basename $file .fastq).out"
+    /programs/diamond-0.9.24/diamond blastx -d  ppk.dmnd -q ${file} -p 24 -e 1e-3 -k 1 -a ./$results
+done;
+##type ctrlX to exit, Y for yes to save, name "diamond.sh"
+
+#if you need to edit script:
+##just run nano again, make changes in R and re-paste into nano, then save/overwrite (this way you won't have to make it executable again, it already is)
+
+#to make the diamond.sh file executable
+chmod u+x diamond.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+## run in tmux
+tmux
+tmux a -t 0 #to open the terminal later (ctrl+b,d to return to main screen)
+
+#to run it:
+./diamond.sh
+
+#use text editor to create daa file
+nano #to make a new one
+
+for f in ./*.daa; do \
+    /programs/diamond-0.9.24/diamond view -a $f | awk -v fn="$f" -F"\t" 'BEGIN {OFS = FS} {print $0, fn}';  
+done > readVrefs.m8
+##save it as daa.sh
+
+#make it executable
+chmod u+x daa.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+#to run it:
+./daa.sh
+
+#move readVrefs.m8 to home so you can move via Filezilla to local computer
+```
+
+
+## Carbohydrate-Active enZymes (CAZy) (ran on 11/8/2022)
+
+```{bash}
+#use this directory (started in 'kld93@cbsumm10)
+cd kbase #all the sample zip files from kbase are here (moved via Filezilla)
+
+mv ~/*.FASTQ.zip ./ (move the files to jps2)
+mv ~/CAZy.fa ./ (move the file to jps2)
+
+#make CAZy.fa database file machine readable
+/programs/diamond-0.9.24/diamond makedb --in CAZy.fa -d CAZy
+
+#unzip each of the fastq.zip files and rename (example below)
+unzip port2_sample2W_cut_109729_74_1.FASTQ.zip
+mv 73a687ab-8e8d-4110-89fd-768746c38150.inter.fastq 2W.fastq
+
+#use text editor to create loop for diamond (save as "diamond.sh")
+##may need to change the file type, names, and "64" depending on which core machine you use
+nano
+
+#copy the following code and paste into nano text editor:
+set -e
+set -u
+set -o pipefail
+array=($(ls ./*.fastq)) 
+echo ${array[@]}
+for file in ${array[@]};
+do
+    results="$(basename $file .fastq).out"
+    /programs/diamond-0.9.24/diamond blastx -d  CAZy.dmnd -q ${file} -p 24 -e 1e-3 -k 1 -a ./$results
+done;
+##type ctrlX to exit, Y for yes to save, name "diamond.sh"
+
+#if you need to edit script:
+##just run nano again, make changes in R and re-paste into nano, then save/overwrite (this way you won't have to make it executable again, it already is)
+
+#to make the diamond.sh file executable
+chmod u+x diamond.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+## run in tmux
+tmux
+tmux a -t 0 #to open the terminal later (ctrl+b,d to return to main screen)
+
+#to run it:
+./diamond.sh
+
+#use text editor to create daa file
+nano #to make a new one
+
+for f in ./*.daa; do \
+    /programs/diamond-0.9.24/diamond view -a $f | awk -v fn="$f" -F"\t" 'BEGIN {OFS = FS} {print $0, fn}';  
+done > readVrefs.m8
+##save it as daa.sh
+
+#make it executable
+chmod u+x daa.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+#to run it:
+tmux
+./daa.sh
+
+#move readVrefs.m8 to home so you can move via Filezilla to local computer
+```
+
+
+## Denitrifying (N) genes (ran on 12/16/2022)
+
+```{bash}
+#use this directory (started in 'kld93@cbsumm10)
+cd kbase #all the sample zip files from kbase are here (moved via Filezilla)
+
+#no need to unzip or move sample files to kbase folder (already there from last time)
+
+#change name of .fa file
+mv allNcycle_seqs_nartat_fix.txt Ncycle.fa
+
+#make Ncycle.fa database file machine readable
+/programs/diamond-0.9.24/diamond makedb --in Ncycle.fa -d Ncycle
+
+#use text editor to create loop for diamond (save as "diamond.sh")
+##may need to change the file type, names, and "64" depending on which core machine you use
+nano
+
+#copy the following code and paste into nano text editor:
+set -e
+set -u
+set -o pipefail
+array=($(ls ./*.fastq)) 
+echo ${array[@]}
+for file in ${array[@]};
+do
+    results="$(basename $file .fastq).out"
+    /programs/diamond-0.9.24/diamond blastx -d  Ncycle.dmnd -q ${file} -p 24 -e 1e-3 -k 1 -a ./$results
+done;
+##type ctrlX to exit, Y for yes to save, name "diamond.sh"
+
+#if you need to edit script:
+##just run nano again, make changes in R and re-paste into nano, then save/overwrite (this way you won't have to make it executable again, it already is)
+
+#to make the diamond.sh file executable
+chmod u+x diamond.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+## run in tmux
+tmux
+tmux a -t 0 #to open the terminal later (ctrl+b,d to return to main screen)
+
+#to run it:
+./diamond.sh
+
+#use text editor to create daa file
+nano #to make a new one
+
+for f in ./*.daa; do \
+    /programs/diamond-0.9.24/diamond view -a $f | awk -v fn="$f" -F"\t" 'BEGIN {OFS = FS} {print $0, fn}';  
+done > readVrefs.m8
+##save it as daa.sh
+
+#make it executable
+chmod u+x daa.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+#to run it:
+tmux
+./daa.sh
+
+#move readVrefs.m8 to home so you can move via Filezilla to local computer
+```
+

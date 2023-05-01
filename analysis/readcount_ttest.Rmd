@@ -1,0 +1,60 @@
+---
+title: "Read Count t-test"
+author: "me"
+date: "2023-01-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(knitr)
+```
+
+## Data
+
+```{r}
+readcount <- read_csv("C:/github/linux_notes/DNAplot_N/Woodchip_metadata.csv") %>%
+  rename(fn = filename)
+```
+
+Subset the data by treatment:
+```{r}
+readcount_W <- readcount %>% 
+  filter(Treatment == "W")
+
+readcount_G <- readcount %>% 
+  filter(Treatment == "G")
+```
+
+plots: 
+```{r}
+summary(readcount_W)
+summary(readcount_G)
+
+ggplot(readcount, aes(Treatment, count)) +
+  geom_boxplot()
+```
+
+t-test:
+```{r}
+t.test(count ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+```
+
+```{r}
+t.test(log(count) ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+```
+
+```{r}
+wilcox.test(count ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+```
+
+
+

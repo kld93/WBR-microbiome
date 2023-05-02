@@ -3,5 +3,5 @@
 .RData
 .Ruserdata
 /KBase_export
-*.m8
-*.fa
+/data/CAZy/readVrefs_CAZy.m8
+/data/N/readVrefs_N.m8

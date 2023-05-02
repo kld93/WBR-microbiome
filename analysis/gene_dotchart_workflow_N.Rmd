@@ -24,7 +24,7 @@ setwd("C:/github/WBR-microbiome")
 
 ### Read in the DIAMOND output data
 ```{r}
-dia_Ncycle.df = read_csv("C:/github/WBR-microbiome/data/N/Woodchip_readVrefs_N.csv", 
+dia_Ncycle.df = read_csv("C:/github/WBR-microbiome/data/Woodchip_readVrefs_N.csv", 
                   col_types = "ccdiiiiiiiddc", 
                   col_names = c("query", 
                                 "subject", 
@@ -55,12 +55,12 @@ dia_Ncycle.df_correct <- dia_Ncycle.df %>%
 
 ### Read in the annotation map for denitrifying genes
 ```{r}
-ann.df = read_csv("C:/github/WBR-microbiome/data/N/annotation_map.csv", col_types = "cc", col_names = c("gene","subject"))
+ann.df = read_csv("C:/github/WBR-microbiome/data/annotation_map.csv", col_types = "cc", col_names = c("gene","subject"))
 ```
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-count.df = read_csv("C:/github/WBR-microbiome/data/N/Woodchip_metadata_N.csv") %>%
+count.df = read_csv("C:/github/WBR-microbiome/data/Woodchip_metadata_N.csv") %>%
   rename(fn = filename)
 ```
 
@@ -118,7 +118,7 @@ dev.size("in")
 
 ### Plot with appropriate dimensions
 ```{r}
-tiff("N_presence_dotchart.tiff", width = 7.2, height = 3.4, units = 'in', res = 150)
+tiff("C:/github/WBR-microbiome/figures/N_presence_dotchart.tiff", width = 8.4, height = 4, units = 'in', res = 150)
 plot(p) # Make plot
 dev.off()
 ```

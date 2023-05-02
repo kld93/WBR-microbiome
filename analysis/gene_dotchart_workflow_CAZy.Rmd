@@ -119,7 +119,7 @@ dev.size("in")
 
 ### Plot with appropriate dimensions
 ```{r}
-tiff("CAZy_presence_dotchart.tiff", width = 8.5, height = 11, units = 'in', res = 150)
+tiff("C:/github/WBR-microbiome/figures/CAZy_presence_dotchart.tiff", width = 8.5, height = 11, units = 'in', res = 150)
 plot(p) # Make plot
 dev.off()
 ```

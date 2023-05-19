@@ -23,9 +23,9 @@ setwd("C:/github/WBR-microbiome")
 
 ### Read in the DIAMOND output data
 ```{r}
-dmnd_output <- read_delim(file = "readVrefs_CAZy.m8")
+dmnd_out_CAZy <- read_delim(file = "C:/github/WBR-microbiome/data/readVrefs_CAZy.m8")
 
-dmnd_output <- dmnd_output %>% 
+dmnd_out_CAZy <- dmnd_out_CAZy %>% 
   mutate(source = gsub("\\|.*", "", subject),
          temp = gsub("^[^\\|]+\\||-.*", "", subject),
          classI = gsub("\\|.*", "", temp),
@@ -34,7 +34,7 @@ dmnd_output <- dmnd_output %>%
 
 ### Correct the sample IDs
 ```{r}
-dmnd_output <- dmnd_output %>% 
+dmnd_out_CAZy <- dmnd_out_CAZy %>% 
   mutate(fn = ifelse(fn == "./7G.out.daa", "sample7G", fn)) %>% 
   mutate(fn = ifelse(fn == "./8W.out.daa", "sample8W", fn)) %>%
   mutate(fn = ifelse(fn == "./9G.out.daa", "sample9G", fn)) %>%
@@ -45,71 +45,101 @@ dmnd_output <- dmnd_output %>%
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-smpl_read_count <- read_csv("Woodchip_metadata_CAZy.csv", col_types = cols(filename = col_character(), Treatment = col_character(), count = col_double())) %>%
+read_count_CAZy <- read_csv("C:/github/WBR-microbiome/data/Woodchip_metadata_CAZy.csv", col_types = cols(filename = col_character(), Treatment = col_character(), count = col_double())) %>%
   dplyr::rename(fn = filename)
 ```
 
 ### Join the two dataframes together
 ```{r}
-d <- dmnd_output %>%
-  left_join(smpl_read_count) %>%
+dmnd_CAZy <- dmnd_out_CAZy %>%
+  left_join(read_count_CAZy) %>%
   select(query, fn, count, classI)
 ```
 
 ### Gives a count of the AA types
 ```{r}
-dmnd_AAcount <- d %>%
+dmnd_AAcount <- dmnd_CAZy %>%
   count(classI) %>% 
   filter(classI == "AA0" | classI == "AA1" | classI == "AA1_1" | classI == "AA1_2" | classI == "AA1_3" | classI == "AA2" | classI == "AA3" | classI == "AA3_1" | classI == "AA3_2" | classI == "AA3_3" | classI == "AA4" | classI == "AA5" | classI == "AA5_1" | classI == "AA5_2" | classI == "AA6" | classI == "AA7" | classI == "AA8" | classI == "AA9" | classI == "AA10" | classI == "AA11" | classI == "AA12" | classI == "AA13" | classI == "AA14" | classI == "AA15" | classI == "AA16" | classI == "AA17")
 ```
 
 ### Filter based on AA
 ```{r}
-dmnd_AAfilter <- d %>% 
+dmnd_AAfilter <- dmnd_CAZy %>% 
   filter(classI == "AA0" | classI == "AA1" | classI == "AA1_1" | classI == "AA1_2" | classI == "AA1_3" | classI == "AA2" | classI == "AA3" | classI == "AA3_1" | classI == "AA3_2" | classI == "AA3_3" | classI == "AA4" | classI == "AA5" | classI == "AA5_1" | classI == "AA5_2" | classI == "AA6" | classI == "AA7" | classI == "AA8" | classI == "AA9" | classI == "AA10" | classI == "AA11" | classI == "AA12" | classI == "AA13" | classI == "AA14" | classI == "AA15" | classI == "AA16" | classI == "AA17")
 ```
 
 ### Summarize by sample ID
 ```{r}
-d2 <- dmnd_AAfilter %>%
+d2_CAZy <- dmnd_AAfilter %>%
     group_by(fn, classI) %>%
     summarize(raw.count = n()) %>% #gives number of queries in each sample were mapped to the given gene
-    left_join(smpl_read_count) %>%
+    left_join(read_count_CAZy) %>%
     mutate(norm.count = (raw.count / count) * 1000000) #gives reads per million total reads
 ```
 
 ### Group by treatment (i.e., "G" for milled, "W" for unmilled)
 ```{r}
-d3 = dplyr::group_by(d2, classI, Treatment)
+d3_CAZy = dplyr::group_by(d2_CAZy, classI, Treatment)
 
-d3.avg = dplyr::summarize(d3, mean = mean(norm.count), sd = sd(norm.count))
+d3_CAZy_avg = dplyr::summarize(d3_CAZy, mean = mean(norm.count), sd = sd(norm.count))
 ```
 
 ### Add a new column with corrected names
 ```{r}
-d3.avg$rename = c("AA0", "AA0", "AA1", "AA1", "AA1_1", "AA1_1", "AA1_2", "AA1_2", "AA1_3", "AA1_3", "AA10", "AA10", "AA11", "AA11", "AA12", "AA12", "AA13", "AA13", "AA14", "AA14", "AA15", "AA15", "AA16", "AA16", "AA17", "AA17",  "AA2", "AA2", "AA3", "AA3", "AA3_1", "AA3_1", "AA3_2", "AA3_2", "AA3_3", "AA3_3", "AA4", "AA4", "AA5", "AA5", "AA5_1", "AA5_1", "AA5_2", "AA5_2", "AA6", "AA6", "AA7", "AA7", "AA8", "AA8", "AA9", "AA9")
+d3_CAZy_avg$rename = c("AA0", "AA0", "AA1", "AA1", "AA1_1", "AA1_1", "AA1_2", "AA1_2", "AA1_3", "AA1_3", "AA10", "AA10", "AA11", "AA11", "AA12", "AA12", "AA13", "AA13", "AA14", "AA14", "AA15", "AA15", "AA16", "AA16", "AA17", "AA17",  "AA2", "AA2", "AA3", "AA3", "AA3_1", "AA3_1", "AA3_2", "AA3_2", "AA3_3", "AA3_3", "AA4", "AA4", "AA5", "AA5", "AA5_1", "AA5_1", "AA5_2", "AA5_2", "AA6", "AA6", "AA7", "AA7", "AA8", "AA8", "AA9", "AA9")
 
-#adds a column of these values, in this order (FYI - use d3.avg to help make this list in the correct order)
+#adds a column of these values, in this order (FYI - use d3d3_CAZy_avg to help make this list in the correct order)
 ```
 
 ### Put CAZy AA families in order for the facet
 ```{r}
-d3.avg$ord = factor(d3.avg$rename, levels=c("AA0", "AA1", "AA1_1", "AA1_2", "AA1_3", "AA2", "AA3", "AA3_1", "AA3_2", "AA3_3", "AA4", "AA5", "AA5_1", "AA5_2", "AA6", "AA7", "AA8", "AA9", "AA10", "AA11", "AA12", "AA13", "AA14", "AA15", "AA16", "AA17"))
+d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0", "AA1", "AA1_1", "AA1_2", "AA1_3", "AA2", "AA3", "AA3_1", "AA3_2", "AA3_3", "AA4", "AA5", "AA5_1", "AA5_2", "AA6", "AA7", "AA8", "AA9", "AA10", "AA11", "AA12", "AA13", "AA14", "AA15", "AA16", "AA17"))
 ```
 
-### Remove gene labels on right
+### Create the dot chart
 ```{r}
-p = ggplot(d3.avg, aes(mean, Treatment)) + geom_point()
+#p = ggplot(d3_CAZy_avg, aes(mean, Treatment)) + geom_point()
 
-p = p +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5))
+#p = p +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5))
 
-p = p + facet_grid(ord ~ .)
+#p = p + facet_grid(ord ~ .)
 
-p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 5)) #add legend position none.
+#p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 5)) #add legend position none.
 
-p = p + labs(x = "Reads per million total reads", y = "Treatment")
+#p = p + labs(x = "Reads per million total reads", y = "Treatment")
   
-p
+#p
+```
+
+### Find dimensions of plot in inches
+```{r}
+#dev.size("in")
+```
+
+### Plot with appropriate dimensions
+```{r}
+#tiff("C:/github/WBR-microbiome/figures/CAZy_presence_dotchart.tiff", width = 8.5, height = 11, units = 'in', res = 150)
+#plot(p) # Make plot
+#dev.off()
+```
+
+### Trim/subset the plot to exclude AA families with low gene presence, and create the dot chart
+```{r}
+d3_CAZy_avg_over15 <- d3_CAZy_avg %>% 
+  filter(mean > 15)
+
+p2 = ggplot(d3_CAZy_avg_over15, aes(mean, Treatment)) + geom_point()
+
+p2 = p2 +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) + expand_limits(x = 0)
+
+p2 = p2 + facet_grid(ord ~ .)
+
+p2 = p2 + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 10)) #add legend position none.
+
+p2 = p2 + labs(x = "Reads per million total reads", y = "Treatment")
+  
+p2
 ```
 
 ### Find dimensions of plot in inches
@@ -119,7 +149,7 @@ dev.size("in")
 
 ### Plot with appropriate dimensions
 ```{r}
-tiff("C:/github/WBR-microbiome/figures/CAZy_presence_dotchart.tiff", width = 8.5, height = 11, units = 'in', res = 150)
-plot(p) # Make plot
+tiff("C:/github/WBR-microbiome/figures/CAZy_presence_dotchart_filtered.tiff", width = 8.4, height = 6.5, units = 'in', res = 150)
+plot(p2) # Make plot
 dev.off()
 ```

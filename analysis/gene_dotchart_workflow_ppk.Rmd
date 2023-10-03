@@ -13,16 +13,17 @@ editor_options:
 
 ## Load packages & set directory
 ```{r, include=FALSE}
+#install.packages("tidyverse")
 library(tidyverse)
 
-setwd("C:/github/WBR-microbiome")
+#setwd("C:/github/WBR-microbiome")
 ```
 
 ## Making the plot
 
 ### Read in the DIAMOND output data
 ```{r}
-dmnd_out_ppk = read_csv("C:/github/WBR-microbiome/data/Woodchip_readVrefs_ppk.csv", 
+dmnd_out_ppk = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_readVrefs_ppk.csv", 
                   col_types = "ccdiiiiiiiddc", 
                   col_names = c("query", 
                                 "subject", 
@@ -42,7 +43,7 @@ dmnd_out_ppk = read_csv("C:/github/WBR-microbiome/data/Woodchip_readVrefs_ppk.cs
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-read_count_ppk = read_csv("C:/github/WBR-microbiome/data/Woodchip_metadata_ppk.csv") %>%
+read_count_ppk = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata_ppk.csv") %>%
   rename(fn = filename)
 ```
 
@@ -96,17 +97,17 @@ dev.off()
 rpm_ppk <- d3_ppk
 
 # subset by treatment (U vs M)
-rpm_ppk_W <- readspermil %>% 
+rpm_ppk_U <- rpm_ppk %>% 
   filter(Treatment == "U")
 
-rpm_ppk_G <- readspermil %>% 
+rpm_ppk_M <- rpm_ppk %>% 
   filter(Treatment == "M")
 ```
 
 #### boxplot
 ```{r}
-summary(rpm_ppk_W)
-summary(rpm_ppk_G)
+summary(rpm_ppk_U)
+summary(rpm_ppk_M)
 
 #install.packages("ggpubr")
 library(ggpubr)

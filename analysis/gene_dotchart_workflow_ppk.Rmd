@@ -90,3 +90,56 @@ plot(p) # Make plot
 dev.off()
 ```
 
+
+## Stats
+```{r}
+rpm_ppk <- d3_ppk
+
+# subset by treatment (U vs M)
+rpm_ppk_W <- readspermil %>% 
+  filter(Treatment == "U")
+
+rpm_ppk_G <- readspermil %>% 
+  filter(Treatment == "M")
+```
+
+#### boxplot
+```{r}
+summary(rpm_ppk_W)
+summary(rpm_ppk_G)
+
+#install.packages("ggpubr")
+library(ggpubr)
+
+ggplot(rpm_ppk, aes(Treatment, norm.count)) +
+  geom_boxplot()
+```
+
+#### check assumptions
+```{r}
+#install.packages("rstatix")
+library(rstatix)
+
+# identify outliers
+rpm_ppk %>% identify_outliers(norm.count)
+### no extreme outliers detected
+
+# check normality
+rpm_ppk %>% shapiro_test(norm.count) 
+### the two p-values are greater than the significance level 0.05 indicating that 
+### the distribution of the data are not significantly different from the normal distribution. 
+### In other words, we can assume the normality.
+
+# check normality with Q-Q plots
+ggqqplot(rpm_ppk, "norm.count")
+### All the points fall approximately along the (45-degree) reference line, for each group. So we can assume normality of the data.
+```
+
+#### t-test for read count per million total reads:
+```{r}
+t.test(norm.count ~ Treatment, data = rpm_ppk, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.0089
+### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
+```
+
+

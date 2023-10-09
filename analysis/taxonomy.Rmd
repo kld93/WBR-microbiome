@@ -1,0 +1,49 @@
+---
+title: "Taxonomy - data from KBase Kaiju"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+## Files needed:
+
+- "kaiju_taxonomy.csv" (output from Kaiju app in KBase - open .kaiju file in notepad and pasted data into csv file)
+
+## Load packages
+```{r, include=FALSE}
+library(tidyverse)
+#install.packages("pals")
+library(pals)
+```
+
+## Load data
+```{r}
+taxonomy <- read_csv("C:/github/WBR-microbiome/data/kaiju_taxonomy.csv")
+### "kaiji_summaries.zip" was downloaded from KBase Kaiju app
+### Data was pasted into csv file
+### "cannot be assigned to non-viral phylum" and "belong to a non-viral phylum with less than 0.5% of all reads" were combined
+### into "unclassified/unassigned" category for simplicity
+```
+
+## Taxonomy plot
+```{r}
+# Sort out low abundance phyla
+taxa_nolowabund <- taxonomy %>% 
+  dplyr::filter(percent > 1) # Remove phyla that are < 1% abundant
+
+sample_order <- c('7G', '9G', '11G', '8W', '10W', '12W') 
+
+phyla_order <- c('Proteobacteria', 'Ascomycota', 'Bacteroidetes', 'Chloroflexi', 'Verrucomicrobia', 'Acidobacteria', 'Planctomycetes', 'Actinobacteria', 'Firmicutes', 'Ignavibacteriae', 'Cyanobacteria', 'unclassified/unassigned')
+
+taxa_nolowabund %>%
+  ggplot(aes(x = factor(name, level = sample_order), y = percent, fill = factor(taxon_name, level = phyla_order))) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment, scales = "free") +
+  scale_y_continuous(name = "Taxa Relative Abundance (%)", labels = scales::percent) +
+  scale_fill_manual(values=as.vector(tol(12))) +
+  xlab("Sample ID") +
+  labs(fill = "Phylum") +
+  theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12), legend.text = element_text(size = 12), legend.title = element_text(size = 12), strip.text = element_text(size = 12))
+```
+

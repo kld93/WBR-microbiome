@@ -15,8 +15,6 @@ editor_options:
 ```{r, include=FALSE}
 #install.packages("tidyverse")
 library(tidyverse)
-
-#setwd("C:/github/WBR-microbiome")
 ```
 
 ## Making the plot
@@ -54,7 +52,7 @@ dmnd_ppk = dmnd_out_ppk %>%
     summarize(raw.count = n()) %>%
     left_join(read_count_ppk) %>%
     mutate(norm.count = (raw.count / count) * 1000000) %>% 
-    mutate(gene = "ppk") # Add column with gene name (to make plot look the same as N and CAZy plots)
+    mutate(gene = "ppk*") # Add column with gene name (to make plot look the same as N and CAZy plots)
 ```
 
 ### Group by treatment (i.e., "G" for milled, "W" for unmilled)
@@ -77,18 +75,6 @@ p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.
 p = p + labs(x = "Reads per million total reads", y = "Treatment")
   
 p
-```
-
-### Find dimensions of plot in inches
-```{r}
-dev.size("in")
-```
-
-### Plot with appropriate dimensions
-```{r}
-tiff("C:/github/WBR-microbiome/figures/ppk_presence_dotchart.tiff", width = 8.4, height = 3, units = 'in', res = 150)
-plot(p) # Make plot
-dev.off()
 ```
 
 

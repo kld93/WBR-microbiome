@@ -15,8 +15,6 @@ editor_options:
 ## Load packages & set directory
 ```{r, include=FALSE}
 library(tidyverse)
-
-#setwd("C:/github/WBR-microbiome")
 ```
 
 ## Making the plot
@@ -87,14 +85,14 @@ d3_CAZy_avg = dplyr::summarize(d3_CAZy, mean = mean(norm.count), sd = sd(norm.co
 
 ### Add a new column with corrected names
 ```{r}
-d3_CAZy_avg$rename = c("AA0", "AA0", "AA1", "AA1", "AA1_1", "AA1_1", "AA1_2", "AA1_2", "AA1_3", "AA1_3", "AA10", "AA10", "AA11", "AA11", "AA12", "AA12", "AA13", "AA13", "AA14", "AA14", "AA15", "AA15", "AA16", "AA16", "AA17", "AA17",  "AA2", "AA2", "AA3", "AA3", "AA3_1", "AA3_1", "AA3_2", "AA3_2", "AA3_3", "AA3_3", "AA4", "AA4", "AA5", "AA5", "AA5_1", "AA5_1", "AA5_2", "AA5_2", "AA6", "AA6", "AA7", "AA7", "AA8", "AA8", "AA9", "AA9")
+d3_CAZy_avg$rename = c("AA0*", "AA0*", "AA1*", "AA1*", "AA10*", "AA10*", "AA11", "AA11", "AA12*", "AA12*", "AA13", "AA13", "AA14*", "AA14*", "AA15", "AA15", "AA16", "AA16", "AA17", "AA17", "AA1_1", "AA1_1", "AA1.2*", "AA1.2*", "AA1.3*", "AA1.3*", "AA2*", "AA2*", "AA3*", "AA3*", "AA3.1*", "AA3.1*", "AA3.2*", "AA3.2*", "AA3.3*", "AA3.3*", "AA4*", "AA4*", "AA5*", "AA5*", "AA5.1*", "AA5.1*", "AA5.2*", "AA5.2*", "AA6", "AA6", "AA7*", "AA7*", "AA8", "AA8", "AA9*", "AA9*")
 
-#adds a column of these values, in this order (FYI - use d3d3_CAZy_avg to help make this list in the correct order)
+#adds a column of these values, in this order (FYI - use d3_CAZy_avg to help make this list in the correct order)
 ```
 
 ### Put CAZy AA families in order for the facet
 ```{r}
-d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0", "AA1", "AA1_1", "AA1_2", "AA1_3", "AA2", "AA3", "AA3_1", "AA3_2", "AA3_3", "AA4", "AA5", "AA5_1", "AA5_2", "AA6", "AA7", "AA8", "AA9", "AA10", "AA11", "AA12", "AA13", "AA14", "AA15", "AA16", "AA17"))
+d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0*", "AA1*", "AA1.1", "AA1.2*", "AA1.3*", "AA2*", "AA3*", "AA3.1*", "AA3.2*", "AA3.3*", "AA4*", "AA5*", "AA5.1*", "AA5.2*", "AA6", "AA7*", "AA8", "AA9*", "AA10*", "AA11", "AA12*", "AA13", "AA14*", "AA15", "AA16", "AA17"))
 ```
 
 ### Create the dot chart
@@ -115,16 +113,16 @@ d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0", "AA1", "AA1_1", "AA
 
 ### Trim/subset the plot to exclude AA families with low gene presence, and create the dot chart
 ```{r}
-d3_CAZy_avg_over15 <- d3_CAZy_avg %>% 
-  filter(mean > 15)
+d3_CAZy_avg_over10 <- d3_CAZy_avg %>% 
+  filter(mean > 10)
 
-p2 = ggplot(d3_CAZy_avg_over15, aes(mean, Treatment)) + geom_point()
+p2 = ggplot(d3_CAZy_avg_over10, aes(mean, Treatment)) + geom_point()
 
 p2 = p2 +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) + expand_limits(x = 0)
 
 p2 = p2 + facet_grid(ord ~ .)
 
-p2 = p2 + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 10)) #add legend position none.
+p2 = p2 + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background = element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 10)) #add legend position none.
 
 p2 = p2 + labs(x = "Reads per million total reads", y = "Treatment")
   

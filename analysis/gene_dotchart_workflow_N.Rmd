@@ -17,14 +17,14 @@ editor_options:
 ```{r, include=FALSE}
 library(tidyverse)
 
-setwd("C:/github/WBR-microbiome")
+#setwd("C:/github/WBR-microbiome")
 ```
 
 ## Making the plot
 
 ### Read in the DIAMOND output data
 ```{r}
-dmnd_out_Ncycle = read_csv("C:/github/WBR-microbiome/data/Woodchip_readVrefs_N.csv", 
+dmnd_out_Ncycle = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_readVrefs_N.csv", 
                   col_types = "ccdiiiiiiiddc", 
                   col_names = c("query", 
                                 "subject", 
@@ -55,19 +55,19 @@ dmnd_out_Ncycle_correct <- dmnd_out_Ncycle %>%
 
 ### Read in the annotation map for denitrifying genes
 ```{r}
-annotation_map = read_csv("C:/github/WBR-microbiome/data/annotation_map.csv", col_types = "cc", col_names = c("gene","subject"))
+annotation_map = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/annotation_map.csv", col_types = "cc", col_names = c("gene","subject"))
 ```
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-read_count_N = read_csv("C:/github/WBR-microbiome/data/Woodchip_metadata_N.csv") %>%
+read_count_N = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata_N.csv") %>%
   rename(fn = filename)
 ```
 
 ### Join the three dataframes together
 ```{r}
 dmnd_N = dmnd_out_Ncycle_correct %>%
-    left_join(annotation_map) %>%
+    left_join(annotation_map, relationship = "many-to-many") %>%
     group_by(fn, gene) %>%
     summarize(raw.count = n()) %>%
     left_join(read_count_N) %>%
@@ -89,7 +89,7 @@ d3_N_avg = dplyr::summarize(d3_N, mean = mean(norm.count), sd = sd(norm.count))
 
 ### Add a new column with corrected names
 ```{r}
-d3_N_avg$rename = c("cNor", "cNor","Nap", "Nap", "Nar", "Nar", "NirK", "NirK", "NirS", "NirS", "NosZ", "NosZ", "qNor", "qNor") 
+d3_N_avg$rename = c("Nap", "Nap", "Nar", "Nar", "NirK", "NirK", "NirS", "NirS", "NosZ", "NosZ", "cNor", "cNor", "qNor", "qNor")
 ```
 
 ### Put genes in order for the facet
@@ -112,15 +112,105 @@ p = p + labs(x = "Reads per million total reads", y = "Treatment")
 p
 ```
 
-### Find dimensions of plot in inches
+
+## Stats
 ```{r}
-dev.size("in")
+rpm_N <- d3_N
+
+# subset by each N-cycle gene
+rpm_N_nap <- rpm_N %>% 
+  filter(gene == "Nap")
+
+rpm_N_nar <- rpm_N %>% 
+  filter(gene == "Nar")
+
+rpm_N_nirk <- rpm_N %>% 
+  filter(gene == "NirK")
+
+rpm_N_nirs <- rpm_N %>% 
+  filter(gene == "NirS")
+
+rpm_N_cnor <- rpm_N %>% 
+  filter(gene == "cNorB")
+
+rpm_N_qnor <- rpm_N %>% 
+  filter(gene == "qNorZ")
+
+rpm_N_nosz <- rpm_N %>% 
+  filter(gene == "NosZ")
 ```
 
-### Plot with appropriate dimensions
+#### boxplot
 ```{r}
-tiff("C:/github/WBR-microbiome/figures/N_presence_dotchart.tiff", width = 8.4, height = 4, units = 'in', res = 150)
-plot(p) # Make plot
-dev.off()
+#install.packages("ggpubr")
+library(ggpubr)
+
+# example:
+ggplot(rpm_N_nar, aes(Treatment, norm.count)) +
+  geom_boxplot()
 ```
+
+#### check assumptions
+```{r}
+#install.packages("rstatix")
+library(rstatix)
+
+# identify outliers
+rpm_N_nap %>% identify_outliers(norm.count)
+rpm_N_nar %>% identify_outliers(norm.count)
+rpm_N_nirk %>% identify_outliers(norm.count)
+rpm_N_nirs %>% identify_outliers(norm.count)
+rpm_N_cnor %>% identify_outliers(norm.count)
+rpm_N_qnor %>% identify_outliers(norm.count)
+rpm_N_nosz %>% identify_outliers(norm.count)
+### no extreme outliers detected
+
+# check normality
+rpm_N_nap %>% shapiro_test(norm.count) # p-value slightly under with this one, check with Q-Q
+rpm_N_nar %>% shapiro_test(norm.count) 
+rpm_N_nirk %>% shapiro_test(norm.count) 
+rpm_N_nirs %>% shapiro_test(norm.count) 
+rpm_N_cnor %>% shapiro_test(norm.count) 
+rpm_N_qnor %>% shapiro_test(norm.count) 
+rpm_N_nosz %>% shapiro_test(norm.count) 
+### the two p-values are greater than the significance level 0.05 indicating that 
+### the distribution of the data are not significantly different from the normal distribution. 
+### In other words, we can assume the normality.
+
+# check normality with Q-Q plots
+ggqqplot(rpm_N_nap, "norm.count")
+### All the points fall approximately along the (45-degree) reference line, for each group. So we can assume normality of the data.
+```
+
+#### t-test for read count per million total reads:
+```{r}
+t.test(norm.count ~ Treatment, data = rpm_N_nap, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.5798
+### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+
+t.test(norm.count ~ Treatment, data = rpm_N_nar, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.5885
+### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+
+t.test(norm.count ~ Treatment, data = rpm_N_nirk, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.0760
+### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+
+t.test(norm.count ~ Treatment, data = rpm_N_nirs, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.9136
+### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+
+t.test(norm.count ~ Treatment, data = rpm_N_cnor, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.1055
+### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+
+t.test(norm.count ~ Treatment, data = rpm_N_qnor, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.2681
+### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+
+t.test(norm.count ~ Treatment, data = rpm_N_nosz, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.4111
+### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+```
+
 

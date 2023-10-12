@@ -15,6 +15,10 @@ editor_options:
 library(tidyverse)
 #install.packages("pals")
 library(pals)
+library(vegan)
+library(glue)
+library(broom)
+library(ggrepel)
 ```
 
 ## Load data
@@ -37,13 +41,175 @@ sample_order <- c('7G', '9G', '11G', '8W', '10W', '12W')
 phyla_order <- c('Proteobacteria', 'Ascomycota', 'Bacteroidetes', 'Chloroflexi', 'Verrucomicrobia', 'Acidobacteria', 'Planctomycetes', 'Actinobacteria', 'Firmicutes', 'Ignavibacteriae', 'Cyanobacteria', 'unclassified/unassigned')
 
 taxa_nolowabund %>%
-  ggplot(aes(x = factor(name, level = sample_order), y = percent, fill = factor(taxon_name, level = phyla_order))) +
+  ggplot(aes(x = factor(name, level = sample_order), y = percent, fill = fct_reorder(taxon_name, -percent))) +
+  #fill = factor(taxon_name, level = phyla_order))) +
   geom_bar(stat = "identity", position = "fill") +
   facet_grid(~treatment, scales = "free") +
   scale_y_continuous(name = "Taxa Relative Abundance (%)", labels = scales::percent) +
-  scale_fill_manual(values=as.vector(tol(12))) +
+  scale_fill_manual(values=as.vector(stepped(13))) +
   xlab("Sample ID") +
   labs(fill = "Phylum") +
   theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12), legend.text = element_text(size = 12), legend.title = element_text(size = 12), strip.text = element_text(size = 12))
 ```
 
+## Clustering exercise
+```{r}
+taxa_nolowabund
+
+taxa_for_pcoa <- taxa_nolowabund %>% 
+  mutate(total_reads = (reads*100)/percent)
+
+### Follow Riffomonas tutorials from here:
+### https://www.youtube.com/watch?v=xyufizOpc5I
+### https://www.youtube.com/watch?v=G5Qckqq5Erw
+### https://www.youtube.com/watch?v=_EjNR6YdnGM
+```
+
+#### Get matrix form
+```{r}
+shared <- taxa_for_pcoa %>% 
+  select(name, reads, taxon_name) %>% 
+  rename("value" = "reads") %>%
+  select(name, taxon_name, value) %>%
+  rename("Group" = "name") %>% 
+  rename("name" = "taxon_name") %>% 
+  #group_by(Group) %>% 
+  #summarize(total = sum(value)) %>% 
+  #arrange(total)
+  pivot_wider(names_from = name, values_from = value) %>% 
+  replace(is.na(.), 0) %>% 
+  as.data.frame()
+
+rownames(shared) <- shared$Group
+shared <- shared[, -1] #remove name column
+shared <- as.matrix(shared) #input for the functions from vegan (rows are samples, columns are taxa, values are the counts)
+```
+
+#### Calculating distances 
+```{r}
+set.seed(8675309)
+dist <- avgdist(shared, dmethod = "bray", sample = 2460412) #rarefied based on lowest sample total (10W = 2460412)
+nmds <- metaMDS(dist)
+
+scores(nmds) %>% 
+  as_tibble(rownames = "Group") %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  geom_point()
+```
+
+#### Build the ordination
+```{r}
+dist_matrix <- dist #to match riffomonas terminology
+
+pcoa <- cmdscale(dist_matrix, eig = TRUE, add = TRUE)
+pcoa
+
+positions <- pcoa$points
+positions
+
+colnames(positions) <- c("pcoa1", "pcoa2")
+
+percent_explained <- 100* pcoa$eig / sum(pcoa$eig)
+
+pretty_pe <- format(round(percent_explained[1:2], digits = 1), nsmall = 1, trim = TRUE)
+
+labs <- c(glue("PCo 1 ({pretty_pe[1]}%)"),
+          glue("PCo 2 ({pretty_pe[2]}%)"))
+
+positions %>% 
+  as_tibble(rownames = "samples") %>% 
+  ggplot(aes(x = pcoa1, y = pcoa2)) +
+  geom_point() +
+  labs(x = labs[1], y = labs[2])
+
+tibble(pe = percent_explained,
+       axis = 1:length(percent_explained)) %>% 
+  ggplot(aes(x = axis, y = pe)) +
+  geom_line() #+
+  #coord_cartesian(xlim = c(1,10))
+
+cumsum(percent_explained) # you'd have to extend to the 4th axis to get 100% of the data explained
+```
+
+#### Make a biplot
+```{r}
+set.seed(8675309)
+
+# generate distance matrix - bray-curtis/rarefied to 2460412
+dist <- avgdist(shared, dmethod = "bray", sample = 2460412) #rarefied based on lowest sample total (10W = 2460412)
+
+# generate nmds ordination
+nmds <- metaMDS(dist)
+
+nmds_positions <- scores(nmds) %>% 
+  as_tibble(rownames = "Group")
+
+nmds_positions %>% 
+  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, color = treatment)) +
+  geom_point()
+
+# what taxa are responsible for the position of each sample on this ordination?
+# generate subsampled shared file
+shared_tbl <- shared %>% 
+  as_tibble(rownames = "Group")
+
+subsample_shared_tbl <- shared_tbl %>% 
+  pivot_longer(-Group) %>% 
+  group_by(Group) %>% 
+  mutate(total = sum(value)) %>% 
+  filter(total > 2460412) %>% 
+  uncount(value) %>% 
+  slice_sample(n = 2460412) %>% 
+  count(Group, name) %>% 
+  pivot_wider(names_from = "name", values_from = "n", values_fill = 0) %>% 
+  pivot_longer(-Group)
+
+# correlate taxa with x and y axis positions
+nmds_positions
+subsample_shared_tbl
+
+nmds_shared <- inner_join(subsample_shared_tbl, nmds_positions)
+
+cor_x <- nmds_shared %>% 
+  nest(data = -name) %>% 
+  mutate(cor_x = map(data, ~cor.test(.x$value, .x$NMDS1, method = "spearman", exact = FALSE) %>% tidy())) %>% 
+  unnest(cor_x) %>% 
+  select(name, estimate, p.value)
+
+cor_y <- nmds_shared %>% 
+  nest(data = -name) %>% 
+  mutate(cor_y = map(data, ~cor.test(.x$value, .x$NMDS2, method = "spearman", exact = FALSE) %>% tidy())) %>% 
+  unnest(cor_y) %>% 
+  select(name, estimate, p.value)
+
+correlations <- inner_join(cor_x, cor_y, by = "name")
+
+correlations %>% 
+  filter(p.value.x < 0.05 | p.value.y < 0.05)
+
+# plot segments from (0,0) to (Rx, Ry)
+high_corr <- correlations
+
+high_corr %>% 
+  ggplot(aes(x = 0, xend = estimate.x, y = 0, yend = estimate.y)) +
+  geom_segment()
+
+nmds_positions %>% 
+  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, color = treatment)) +
+  geom_point() +
+  geom_segment(data = high_corr, aes(x = 0, xend = estimate.x, y = 0, yend = estimate.y), inherit.aes = FALSE)
+
+# plot text at (Rx, Ry)
+nmds_positions %>% 
+  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, color = treatment)) +
+  geom_point() +
+  #geom_segment(data = high_corr, aes(x = 0, xend = estimate.x, y = 0, yend = estimate.y), inherit.aes = FALSE) +
+  geom_text_repel(data = high_corr, aes(x = estimate.x, y = estimate.y, label = name), min.segment.length = 0.05, inherit.aes = FALSE) +
+  geom_point(data = high_corr, color = "black", aes(x = estimate.x, y = estimate.y), inherit.aes = FALSE)
+```
+
+Biplot - shows how the abundance of each OTU correlates with the position of each sample on the x and y axis of the ordination. 
+Helpful for understanding the drivers of the differences we see in the communities.

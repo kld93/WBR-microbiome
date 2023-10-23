@@ -94,11 +94,18 @@ shared <- taxa_for_pcoa %>%
   select(name, taxon_name, value) %>%
   rename("Group" = "name") %>% 
   rename("name" = "taxon_name") %>% 
-  #group_by(Group) %>% 
+  group_by(Group) %>% 
   #summarize(total = sum(value)) %>% 
-  #arrange(total)
+  #arrange(total) #this shows that 10W is the lowest 10W is the lowest at 15700522 reads
+  mutate(total = sum(value)) %>%
+  filter(total > 15700521) %>% 
+  group_by(name) %>% 
+  mutate(total = sum(value)) %>% 
+  filter(total != 0) %>% 
+  ungroup() %>% 
+  select(-total) %>% 
   pivot_wider(names_from = name, values_from = value) %>% 
-  replace(is.na(.), 0) %>% 
+  replace(is.na(.), 0) %>%
   as.data.frame()
 
 rownames(shared) <- shared$Group
@@ -109,12 +116,13 @@ shared <- as.matrix(shared) #input for the functions from vegan (rows are sample
 #### Calculating distances 
 ```{r}
 set.seed(8675309)
-dist <- avgdist(shared, dmethod = "bray", sample = 2460412) #rarefied based on lowest sample total (10W = 2460412)
+dist <- avgdist(shared, dmethod = "bray", sample = 15700522) #rarefied based on lowest sample total (10W = 15700522)
 nmds <- metaMDS(dist)
 
 scores(nmds) %>% 
-  as_tibble(rownames = "Group") %>% 
-  ggplot(aes(x = NMDS1, y = NMDS2, color = Treatment)) +
+  as_tibble(rownames = "Group") %>%
+  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
+  ggplot(aes(x = NMDS1, y = NMDS2, color = treatment)) +
   geom_point()
 ```
 
@@ -139,6 +147,7 @@ labs <- c(glue("PCo 1 ({pretty_pe[1]}%)"),
 
 positions %>% 
   as_tibble(rownames = "samples") %>% 
+  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
   ggplot(aes(x = pcoa1, y = pcoa2, color = treatment)) +
   geom_point() +
   labs(x = labs[1], y = labs[2])
@@ -152,12 +161,20 @@ tibble(pe = percent_explained,
 cumsum(percent_explained) # you'd have to extend to the 4th axis to get 100% of the data explained
 ```
 
-#### Make a biplot
+#### PERMANOVA
+```{r}
+metadata <- read.csv("C:/github/WBR-microbiome/data/pcoa_metadata.csv")
+
+adonis2(dist_matrix ~ treatment, data = metadata)
+```
+
+
+## Make a biplot
 ```{r}
 set.seed(8675309)
 
 # generate distance matrix - bray-curtis/rarefied to 2460412
-dist <- avgdist(shared, dmethod = "bray", sample = 2460412) #rarefied based on lowest sample total (10W = 2460412)
+dist <- avgdist(shared, dmethod = "bray", sample = 15700522) #rarefied based on lowest sample total (10W = 2460412)
 
 # generate nmds ordination
 nmds <- metaMDS(dist)

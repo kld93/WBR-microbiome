@@ -23,11 +23,12 @@ library(ggrepel)
 
 ## Load data
 ```{r}
-taxonomy <- read_csv("C:/github/WBR-microbiome/data/kaiju_taxonomy.csv")
+taxonomy <- read_csv("C:/github/WBR-microbiome/data/kaiju_output_100nounclassified.csv")
 ### "kaiji_summaries.zip" was downloaded from KBase Kaiju app
-### Data was pasted into csv file
-### "cannot be assigned to non-viral phylum" and "belong to a non-viral phylum with less than 0.5% of all reads" were combined
-### into "unclassified/unassigned" category for simplicity
+### Phylum data was pasted into csv file
+### Unclassified data is excluded
+
+### "Unclassified" data was used to calculate total reads, then phylum percentages were re-calculated based on that total
 ```
 
 ## Taxonomy plot
@@ -38,19 +39,39 @@ taxa_nolowabund <- taxonomy %>%
 
 sample_order <- c('7G', '9G', '11G', '8W', '10W', '12W') 
 
-phyla_order <- c('Proteobacteria', 'Ascomycota', 'Bacteroidetes', 'Chloroflexi', 'Verrucomicrobia', 'Acidobacteria', 'Planctomycetes', 'Actinobacteria', 'Firmicutes', 'Ignavibacteriae', 'Cyanobacteria', 'unclassified/unassigned')
+phyla_order <- c('Proteobacteria', 'Ascomycota', 'Bacteroidetes', 'Chloroflexi', 'Verrucomicrobia', 'cannot be assigned to a (non-viral) phylum', 'belong to a (non-viral) phylum with less than 0.5% of all reads', 'Acidobacteria', 'Planctomycetes', 'Actinobacteria', 'Ignavibacteriae', 'Firmicutes')
+
+phyla_order_reverse <- rev(phyla_order)
 
 taxa_nolowabund %>%
-  ggplot(aes(x = factor(name, level = sample_order), y = percent, fill = fct_reorder(taxon_name, -percent))) +
-  #fill = factor(taxon_name, level = phyla_order))) +
+  ggplot(aes(x = factor(name, level = sample_order), y = percent, fill = factor(taxon_name, level = phyla_order_reverse))) +
+  #fill = fct_reorder(taxon_name, percent))) +
   geom_bar(stat = "identity", position = "fill") +
   facet_grid(~treatment, scales = "free") +
   scale_y_continuous(name = "Taxa Relative Abundance (%)", labels = scales::percent) +
-  scale_fill_manual(values=as.vector(stepped(13))) +
+  scale_fill_manual(values=as.vector(tol(12))) +
   xlab("Sample ID") +
   labs(fill = "Phylum") +
   theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12), legend.text = element_text(size = 12), legend.title = element_text(size = 12), strip.text = element_text(size = 12))
 ```
+
+
+
+
+## Statistics
+Subset the data by treatment:
+```{r}
+ascomycota <- taxa_nolowabund %>% 
+  filter(taxon_name == "Ascomycota")
+```
+
+t-test for read count:
+```{r}
+t.test(percent ~ treatment, data = ascomycota, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+```
+
+
+
 
 ## Clustering exercise
 ```{r}
@@ -93,7 +114,7 @@ nmds <- metaMDS(dist)
 
 scores(nmds) %>% 
   as_tibble(rownames = "Group") %>% 
-  ggplot(aes(x = NMDS1, y = NMDS2)) +
+  ggplot(aes(x = NMDS1, y = NMDS2, color = Treatment)) +
   geom_point()
 ```
 
@@ -118,7 +139,7 @@ labs <- c(glue("PCo 1 ({pretty_pe[1]}%)"),
 
 positions %>% 
   as_tibble(rownames = "samples") %>% 
-  ggplot(aes(x = pcoa1, y = pcoa2)) +
+  ggplot(aes(x = pcoa1, y = pcoa2, color = treatment)) +
   geom_point() +
   labs(x = labs[1], y = labs[2])
 

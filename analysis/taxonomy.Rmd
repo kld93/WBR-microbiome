@@ -35,11 +35,12 @@ taxonomy <- read_csv("C:/github/WBR-microbiome/data/kaiju_output_100nounclassifi
 ```{r}
 # Sort out low abundance phyla
 taxa_nolowabund <- taxonomy %>% 
-  dplyr::filter(percent > 1) # Remove phyla that are < 1% abundant
+  dplyr::filter(percent > 1) %>% # Remove phyla that are < 1% abundant
+  mutate(taxon_name = replace(taxon_name, taxon_name == 'Ascomycota', 'Ascomycota (fungi)'))
 
 sample_order <- c('7G', '9G', '11G', '8W', '10W', '12W') 
 
-phyla_order <- c('Proteobacteria', 'Ascomycota', 'Bacteroidetes', 'Chloroflexi', 'Verrucomicrobia', 'cannot be assigned to a (non-viral) phylum', 'belong to a (non-viral) phylum with less than 0.5% of all reads', 'Acidobacteria', 'Planctomycetes', 'Actinobacteria', 'Ignavibacteriae', 'Firmicutes')
+phyla_order <- c('Proteobacteria', 'Ascomycota (fungi)', 'Bacteroidetes', 'Chloroflexi', 'Verrucomicrobia', 'cannot be assigned to a (non-viral) phylum', 'belong to a (non-viral) phylum with less than 0.5% of all reads', 'Acidobacteria', 'Planctomycetes', 'Actinobacteria', 'Ignavibacteriae', 'Firmicutes')
 
 phyla_order_reverse <- rev(phyla_order)
 
@@ -56,21 +57,17 @@ taxa_nolowabund %>%
 ```
 
 
-
-
 ## Statistics
 Subset the data by treatment:
 ```{r}
-ascomycota <- taxa_nolowabund %>% 
-  filter(taxon_name == "Ascomycota")
+#ascomycota <- taxa_nolowabund %>% 
+  #filter(taxon_name == "Ascomycota")
 ```
 
 t-test for read count:
 ```{r}
-t.test(percent ~ treatment, data = ascomycota, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+#t.test(percent ~ treatment, data = ascomycota, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ```
-
-
 
 
 ## Clustering exercise
@@ -145,12 +142,13 @@ pretty_pe <- format(round(percent_explained[1:2], digits = 1), nsmall = 1, trim 
 labs <- c(glue("PCo 1 ({pretty_pe[1]}%)"),
           glue("PCo 2 ({pretty_pe[2]}%)"))
 
+## Main formatted plot for paper:
 positions %>% 
   as_tibble(rownames = "samples") %>% 
   mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
   ggplot(aes(x = pcoa1, y = pcoa2, color = treatment)) +
-  geom_point() +
-  labs(x = labs[1], y = labs[2])
+  geom_point(size = 3) +
+  labs(x = labs[1], y = labs[2], color = "Treatment")
 
 tibble(pe = percent_explained,
        axis = 1:length(percent_explained)) %>% 
@@ -168,6 +166,10 @@ metadata <- read.csv("C:/github/WBR-microbiome/data/pcoa_metadata.csv")
 adonis2(dist_matrix ~ treatment, data = metadata)
 ```
 
+
+
+
+(Not entirely sure what to make of the below plot - keep for now)
 
 ## Make a biplot
 ```{r}

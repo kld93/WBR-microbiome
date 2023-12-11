@@ -1,0 +1,165 @@
+---
+title: "Polyphosphate kinase (ppk) Differential Expression"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+## Files needed:
+
+- "RNA_readVrefs_ppk.csv" (output from DIAMOND - copied readVrefs file into csv)
+- "sampleinfo_RNA.csv" (metadata about each sample)
+
+## Load packages & set directory
+```{r, include=FALSE}
+#install.packages("tidyverse")
+library(tidyverse)
+```
+
+## Load data
+```{r}
+# count data (from DIAMOND)
+dmnd_out_ppk <- read_csv("data/RNA_readVrefs_ppk.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend,", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+dmnd_out_ppk <- dmnd_out_ppk %>% 
+  mutate(fn = ifelse(fn == "./hf_cs_p2_t0_h0_prok.out.daa", "hf_cs_p2_t0_h0_prok", fn)) %>% 
+  mutate(fn = ifelse(fn == "./hf_cs_p2_t10_h100_prok.out.daa", "hf_cs_p2_t10_h100_prok", fn)) %>%
+  mutate(fn = ifelse(fn == "./hf_drw_p2_t0_h0_prok.out.daa", "hf_drw_p2_t0_h0_prok", fn)) %>%
+  mutate(fn = ifelse(fn == "./hf_drw_p2_t10_h100_prok.out.daa", "hf_drw_p2_t10_h100_prok", fn)) %>%
+  mutate(fn = ifelse(fn == "./hf_drw_p2_t3_h8_prok.out.daa", "hf_drw_p2_t3_h8_prok", fn)) %>%
+  mutate(fn = ifelse(fn == "./hf_drw_p2_t6_h16_prok.out.daa", "hf_drw_p2_t6_h16_prok", fn)) %>%
+  mutate(fn = ifelse(fn == "./hf_drw_p2_t7_h28_prok.out.daa", "hf_drw_p2_t7_h28_prok", fn)) %>%
+  mutate(fn = ifelse(fn == "./hf_drw_p2_t8_h52_prok.out.daa", "hf_drw_p2_t8_h52_prok", fn))
+```
+
+### Read in the metadata (i.e., read counts)
+```{r}
+read_count_ppk = read.csv("C:/Users/Katie/Documents/WBR-microbiome/data/sampleinfo_RNA.csv")
+```
+
+### Join the two dataframes together
+```{r}
+dmnd_ppk = dmnd_out_ppk %>%
+    group_by(fn) %>%
+    summarize(raw.count = n()) %>% #sums up the rows for each sample (resulting #s should add to 7269)
+    left_join(read_count_ppk) %>%
+    mutate(norm.count = (raw.count / count) * 1000000) %>% 
+    mutate(gene = "ppk") # Add column with gene name (to make plot look the same as N and CAZy plots)
+```
+
+### Create the dot chart
+```{r}
+dmnd_ppk %>% 
+  ggplot(aes(fn, norm.count)) +
+  geom_point() +
+  facet_grid(~gene)+ 
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill="gold"), 
+        panel.grid.major.y = element_line(linetype=3, color="dark grey"), 
+        legend.position ="none", 
+        axis.text.y = element_text(size = 10), 
+        axis.text.x = element_text(angle = 90)) +
+  labs(x = "Sample", y = "Reads per million total reads")
+```
+
+### different plot
+```{r}
+dmnd_ppk %>% 
+  ggplot(aes(x = hours_after_start, y = raw.count, color = condition)) +
+  geom_line() +
+  labs(x = "Time from start (hours)", y = "Reads per million mapped to ppk", color = "Bioreactor\nCondition")
+```
+
+
+## DESeq
+
+### Prepare count data
+```{r}
+library(DESeq2)
+
+#counts data
+cts <- dmnd_out_ppk %>%
+  group_by(fn) %>%
+  summarize(raw.count = n()) %>%
+  pivot_wider(names_from = fn, values_from = raw.count) %>% 
+  data.frame
+
+ppk <- "ppk"
+
+rownames(cts) <- ppk
+
+counts_data <- cts #%>% 
+  #select(!c(hf_cs_p2_t0_h0_prok, hf_cs_p2_t10_h100_prok))
+
+#sample info
+sampleinfo <- read_count_ppk %>% 
+  select(!c(port, timepoint)) %>% 
+  data.frame
+
+rownames(sampleinfo) <- sampleinfo$fn
+
+coldata <- sampleinfo %>% 
+  select(!fn) #%>% 
+  #filter(condition == "drw")
+```
+
+### check data
+```{r}
+# make sure the row names in coldata match the column names in counts_data
+all(colnames(counts_data) %in% rownames(coldata))
+
+# make sure they are also in the same order
+all(colnames(counts_data) == rownames(coldata))
+```
+
+### construct a DESeqDataSet object
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts_data,
+                              colData = coldata,
+                              design = ~ condition)
+
+dds
+```
+
+### set the factor level
+```{r}
+#dds$hours_cat <- relevel(dds$hours_cat, ref = "A")
+
+dds$condition <- relevel(dds$condition, ref = "cs")
+```
+
+### Run DESeq2
+```{r}
+#dds <- DESeq(dds)
+dds <- estimateSizeFactors(dds)
+dds <- estimateDispersionsGeneEst(dds)
+dispersions(dds) <- mcols(dds)$dispGeneEst
+
+
+
+res <- results(dds)
+```
+
+
+### Explore results
+```{r}
+res
+```
+

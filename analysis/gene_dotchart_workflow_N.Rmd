@@ -60,8 +60,7 @@ annotation_map = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/annotati
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-read_count_N = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata_N.csv") %>%
-  rename(fn = filename)
+read_count_N = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata_N.csv")
 ```
 
 ### Join the three dataframes together
@@ -214,3 +213,73 @@ t.test(norm.count ~ Treatment, data = rpm_N_nosz, alternative = "two.sided", pai
 ```
 
 
+## Create a COMBINED ppk and N-cycle dot plot (for paper)
+
+### Read in the ppk DIAMOND output data
+```{r}
+dmnd_out_ppk = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_readVrefs_ppk.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend,", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+```
+
+### Read in the metadata (i.e., read counts)
+```{r}
+read_count_ppk = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata_ppk.csv")
+```
+
+### Join the two dataframes together
+```{r}
+dmnd_ppk = dmnd_out_ppk %>%
+    group_by(fn) %>%
+    summarize(raw.count = n()) %>%
+    left_join(read_count_ppk) %>%
+    mutate(norm.count = (raw.count / count) * 1000000) %>% 
+    mutate(gene = "ppk*") # Add column with gene name (to make plot look the same as N and CAZy plots)
+```
+
+### Group by treatment (i.e., "G" for milled, "W" for unmilled)
+```{r}
+d3_ppk = dplyr::group_by(dmnd_ppk, gene, Treatment)
+
+d3_ppk_avg = dplyr::summarize(d3_ppk, mean = mean(norm.count), sd = sd(norm.count))
+```
+
+### Bind the ppk and N-cycle data together
+```{r}
+d3_ppk_avg
+d3_N_avg
+
+d3_N_ppk <- rbind(d3_N_avg, d3_ppk_avg)
+
+d3_N_ppk$rename = c("Nap", "Nap", "Nar", "Nar", "NirK", "NirK", "NirS", "NirS", "NosZ", "NosZ", "cNor", "cNor", "qNor", "qNor", "ppk*", "ppk*")
+
+d3_N_ppk$ord = factor(d3_N_ppk$rename, levels=c("Nap","Nar","NirK","NirS","cNor","qNor","NosZ", "ppk*"))
+```
+
+### Create COMBINED dot chart
+```{r}
+p = ggplot(d3_N_ppk, aes(mean, Treatment)) + geom_point()
+
+p = p +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) + expand_limits(x = 0)
+
+p = p + facet_grid(ord ~ .)
+
+p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 10)) #add legend position none.
+
+p = p + labs(x = "Reads per million total reads", y = "Treatment")
+  
+p
+```

@@ -41,8 +41,7 @@ dmnd_out_ppk = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_r
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-read_count_ppk = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata_ppk.csv") %>%
-  rename(fn = filename)
+read_count_ppk = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata_ppk.csv")
 ```
 
 ### Join the two dataframes together

@@ -36,9 +36,15 @@ taxonomy <- read_csv("C:/github/WBR-microbiome/data/kaiju_output_100nounclassifi
 # Sort out low abundance phyla
 taxa_nolowabund <- taxonomy %>% 
   dplyr::filter(percent > 1) %>% # Remove phyla that are < 1% abundant
-  mutate(taxon_name = replace(taxon_name, taxon_name == 'Ascomycota', 'Ascomycota (fungi)'))
+  mutate(taxon_name = replace(taxon_name, taxon_name == 'Ascomycota', 'Ascomycota (fungi)')) %>% 
+  mutate(name = ifelse(name == "7G", "7M", name)) %>% 
+  mutate(name = ifelse(name == "9G", "9M", name)) %>% 
+  mutate(name = ifelse(name == "11G", "11M", name)) %>% 
+  mutate(name = ifelse(name == "8W", "8U", name)) %>% 
+  mutate(name = ifelse(name == "10W", "10U", name)) %>% 
+  mutate(name = ifelse(name == "12W", "12U", name))
 
-sample_order <- c('7G', '9G', '11G', '8W', '10W', '12W') 
+sample_order <- c('7M', '9M', '11M', '8U', '10U', '12U') 
 
 phyla_order <- c('Proteobacteria', 'Ascomycota (fungi)', 'Bacteroidetes', 'Chloroflexi', 'Verrucomicrobia', 'cannot be assigned to a (non-viral) phylum', 'belong to a (non-viral) phylum with less than 0.5% of all reads', 'Acidobacteria', 'Planctomycetes', 'Actinobacteria', 'Ignavibacteriae', 'Firmicutes')
 

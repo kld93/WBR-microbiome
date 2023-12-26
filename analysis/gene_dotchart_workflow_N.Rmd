@@ -277,7 +277,7 @@ p = p +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) + 
 
 p = p + facet_grid(ord ~ .)
 
-p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 10)) #add legend position none.
+p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 12)) #add legend position none.
 
 p = p + labs(x = "Reads per million total reads", y = "Treatment")
   

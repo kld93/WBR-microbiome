@@ -133,15 +133,15 @@ scores(nmds) %>%
 ```{r}
 dist_matrix <- dist #to match riffomonas terminology
 
-pcoa <- cmdscale(dist_matrix, eig = TRUE, add = TRUE)
-pcoa
+pcoa_tax <- cmdscale(dist_matrix, eig = TRUE, add = TRUE)
+pcoa_tax
 
-positions <- pcoa$points
+positions <- pcoa_tax$points
 positions
 
 colnames(positions) <- c("pcoa1", "pcoa2")
 
-percent_explained <- 100* pcoa$eig / sum(pcoa$eig)
+percent_explained <- 100* pcoa_tax$eig / sum(pcoa_tax$eig)
 
 pretty_pe <- format(round(percent_explained[1:2], digits = 1), nsmall = 1, trim = TRUE)
 
@@ -153,8 +153,8 @@ positions %>%
   as_tibble(rownames = "samples") %>% 
   mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
   ggplot(aes(x = pcoa1, y = pcoa2, color = treatment)) +
-  geom_point(size = 3) +
-  labs(x = labs[1], y = labs[2], color = "Treatment")
+  geom_point(size = 3) #+
+  #labs(x = labs[1], y = labs[2], color = "Treatment")
 
 tibble(pe = percent_explained,
        axis = 1:length(percent_explained)) %>% 

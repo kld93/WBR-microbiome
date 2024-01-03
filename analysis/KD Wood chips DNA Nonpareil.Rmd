@@ -1,0 +1,67 @@
+---
+title: "Nonpareil WWTP"
+author: "Jim Shapleigh"
+date: '2023-01-26'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+See info here https://nonpareil.readthedocs.io/en/latest/curves.html
+
+Set working directory
+```{r, include=FALSE}
+setwd("C:/Users/jps2/Backup/KD_Wood_chips/")
+```
+
+```{r load library, include=FALSE}
+library(tidyverse)
+library(magrittr)
+library(Nonpareil)
+```
+
+#To learn more about curve
+```{r, eval=FALSE}
+??Nonpareil.curve
+```
+
+To get curve and summary (with diversity value) for one file
+```{r, eval=FALSE}
+Nonpareil.curve('7G_QCS1.npo')
+
+nps = Nonpareil.curve('7G_QCS1.npo')
+
+summary(nps)
+```
+
+To get curve and summary (with diversity value) for set of files. Only way I could get this
+to work. Need to see if there are any updated R files.
+```{r}
+npo_data.df = read_table("C:/Users/jps2/Backup/KD_Wood_chips/npo_files.txt", col_names=TRUE, col_types = "ccc")
+
+info = as.vector(npo_data.df)
+
+attach(info)
+
+nps2 = Nonpareil.set(File, col=Col, labels=Name, plot.opts=list(plot.observed=TRUE, main = paste("Nonpareil Curves for Wood Chip DNA"))) #To remove the min just use ""
+
+detach(info)
+
+summary(nps2)
+```
+
+Find dimensions of plot in inches
+```{r}
+dev.size("in")
+```
+
+Plot with appropriate dimensions
+```{r}
+tiff("Nonpareil_Wood_chip_DNA.tiff", width = 8.5, height = 3.5, units = 'in', res = 150)
+plot(nps2) # Make plot
+dev.off()
+```

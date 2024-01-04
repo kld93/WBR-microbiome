@@ -45,16 +45,16 @@ dist.mat = read_tsv("C:/github/WBR-microbiome/data/data_from_JPS/sketch_all_comb
 pcoa_mash <- cmdscale(dist.mat, eig = TRUE, add = TRUE)
 pcoa_mash
 
-positions_mash <- pcoa_mash$points
+positions_mash <- pcoa_mash$points #pulling out the point coordinates to plot them for each sample
 positions_mash
 
-colnames(positions_mash) <- c("pcoa1", "pcoa2")
+colnames(positions_mash) <- c("pcoa1", "pcoa2") #renaming columns for ease of use in ggplot
 
-percent_explained_mash <- 100* pcoa_mash$eig / sum(pcoa_mash$eig)
+percent_explained_mash <- 100* pcoa_mash$eig / sum(pcoa_mash$eig) #setup for axis labels
 
-pretty_pe_mash <- format(round(percent_explained_mash[1:2], digits = 1), nsmall = 1, trim = TRUE)
+pretty_pe_mash <- format(round(percent_explained_mash[1:2], digits = 1), nsmall = 1, trim = TRUE) #setup for axis labels
 
-labs_mash <- c(glue("PCo 1 ({pretty_pe_mash[1]}%)"),
+labs_mash <- c(glue("PCo 1 ({pretty_pe_mash[1]}%)"), #setup for axis labels
           glue("PCo 2 ({pretty_pe_mash[2]}%)"))
 
 ## Main formatted plot for paper:
@@ -85,16 +85,28 @@ positions_mash %>%
 ```
 
 ```{r}
-dist_mat_mash <- dist.mat %>% 
+## PERMANOVA (following: https://www.youtube.com/watch?v=1ETBgbXl-BM)
+dist_mat_clean <- dist.mat %>% 
   as.data.frame()
 
-rownames(dist_mat_mash) <- c("10U", "11M", "12U", "7M", "8U", "9M")
-colnames(dist_mat_mash) <- c("10U", "11M", "12U", "7M", "8U", "9M")
+rownames(dist_mat_clean) <- c("10U", "11M", "12U", "7M", "8U", "9M")
+colnames(dist_mat_clean) <- c("10U", "11M", "12U", "7M", "8U", "9M")
 
-## PERMANOVA
-metadata <- read.csv("C:/github/WBR-microbiome/data/pcoa_metadata.csv")
+distance <- dist_mat_clean %>% 
+  as_tibble() %>% 
+  mutate("sample_id" = c("10U", "11M", "12U", "7M", "8U", "9M")) %>% 
+  select(c("sample_id", "10U", "11M", "12U", "7M", "8U", "9M"))
 
-adonis2(dist_mat_mash ~ treatment, data = metadata) 
-###### left off: check out "scaled_bray" from MFC and see if it looks the same as the distance matrix I have here
+metadata <- read.csv("C:/github/WBR-microbiome/data/pcoa_metadata.csv") %>% 
+  rename("sample_id" = "samples") %>% 
+  as_tibble()
+
+meta_distance <- inner_join(metadata, distance)
+
+all_dist <- meta_distance %>% 
+  select(all_of(.[["sample_id"]])) %>% 
+  as.dist()
+
+adonis2(all_dist ~ treatment, data = meta_distance) #returns p-value of 0.1 so the groups are not significantly different
 ```
 

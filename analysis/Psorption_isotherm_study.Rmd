@@ -1,0 +1,94 @@
+---
+title: "P-sorption isotherm experiment"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+## Files needed:
+
+- "isotherm_icp_output.csv" (from Shree; minor edits to make it R-friendly)
+
+## Load packages & set directory
+```{r, include=FALSE}
+#install.packages("PUPAIM")
+library(tidyverse)
+library(PUPAIM)
+
+devtools::install_github("devalc/Sorption")
+library("Sorption")
+```
+
+## Load data
+```{r}
+icp_output <- read_csv("C:/github/WBR-microbiome/data/isotherm_icp_output.csv")
+```
+
+## Some preprocessing
+```{r}
+icp_results <- icp_output %>% 
+  mutate(p_loss = initial_p_treatment - phosphorus) %>% #calculate P change
+  mutate(p_adsorp = (p_loss * 50/1000)/(woodchip_mass)) # calculate P adsorption (mg P / g)
+```
+
+## Plotting
+```{r}
+# Qe is the observed adsorption capacity (mg/g) 
+# Ce is the equilibrium concentration (mg/L) 
+### (assuming equilibrium was met after 24 hours)
+
+icp_truesamples <- icp_results %>% 
+  filter(sample_or_standard == "sample") 
+
+icp_true_mean <- icp_truesamples %>% 
+  group_by(initial_p_treatment) %>% 
+  summarize(mean_p_adsorp = mean(p_adsorp), mean_p_final = mean(phosphorus)) 
+
+icp_true_mean %>% 
+  ggplot() +
+  geom_point(aes(x = mean_p_final, y = mean_p_adsorp)) +
+  labs(y = "P adsorbed per unit mass (mg/g)", x = "Equilibrium concentration of P (mg/L)")
+```
+
+## Isotherm modeling
+```{r}
+Ce <- icp_true_mean$mean_p_final
+Qe <- icp_true_mean$mean_p_adsorp
+
+## Following: https://cran.r-project.org/web/packages/PUPAIM/vignettes/PUPAIM.html
+
+# One-Parameter Adsorption Isotherm Model
+henryanalysis(Ce, Qe) #AIC = -22.25886
+### the lowest number AIC is the best fit model for the data 
+### (lowest negative number in this case, not the lowest absolute value)
+
+
+
+# Other models tested but not used:
+
+# Two-Parameter Adsorption Isotherm Model
+hill.LM(Ce, Qe)
+hillanalysis(Ce, Qe) # AIC = -20.63175
+
+# Three-Parameter Adsorption Isotherm Model
+redlichpeterson.LM(Ce, Qe)
+redlichpetersonanalysis(Ce, Qe) # AIC = -20.63176
+
+# Langmuir (https://github.com/devalc/Sorption/)
+LangmuirParameters(Ce, Qe, "langmuir_out.csv")
+LangmuirPlot(Ce, Qe, cor_lab_x, cor_lab_y, eq_lab_x, eq_lab_y)
+
+# Freundlich (https://github.com/devalc/Sorption/)
+FreundlichParameters(Ce, Qe, "freundlich_out.csv")
+FreundlichPlot(Ce, Qe, 0.,0.8,0.,0.9)
+```
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,41 @@
+---
+title: "Gravity-fed Bioreactor Column Study"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+## Files needed:
+
+- "GFBR_icp_ic_results.csv"
+
+## Load packages & set directory
+```{r, include=FALSE}
+#install.packages("tidyverse")
+library(tidyverse)
+```
+
+## Load data
+```{r}
+icp_ic_results <- read_csv("C:/github/WBR-microbiome/data/GFBR_icp_ic_results.csv") %>% 
+  unite(datetime, c(date, time), sep = " ", remove = FALSE) #combine date and time
+```
+
+## Quick plots
+```{r}
+icp_ic_results %>% 
+  filter(!replicate == "NA") %>%
+  #group_by(names) %>% 
+  #summarise(meanP = mean(P)) %>% 
+  ggplot(aes(x = hours_after_start, y = P, color = reactor)) +
+  geom_line(size = 0.75) +
+  facet_wrap(~replicate, ncol = 1) +
+  geom_vline(xintercept = 168) +
+  theme_classic() +
+  labs(title = "Phosphorus Trends in Gravity-fed Column Reactors - Control Run", color = "Reactor:") +
+  xlab("Hours After Start") +
+  ylab ("Phosphorus Concentration (mg/L)") +
+  theme(legend.position = "bottom")
+```
+

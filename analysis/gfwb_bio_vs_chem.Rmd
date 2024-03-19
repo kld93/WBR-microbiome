@@ -24,18 +24,38 @@ icp_ic_results <- read_csv("C:/github/WBR-microbiome/data/GFBR_icp_ic_results.cs
 
 ## Quick plots
 ```{r}
+breaks <- icp_ic_results %>% 
+  filter(!replicate == "NA") %>%
+  filter(!treatment == "P") %>%
+  pull(hours_after_start) %>% 
+  unique()
+
+timepoints <- ifelse(breaks > 120, breaks - 168, breaks)
+
 icp_ic_results %>% 
   filter(!replicate == "NA") %>%
-  #group_by(names) %>% 
-  #summarise(meanP = mean(P)) %>% 
+  filter(!treatment == "P") %>% 
   ggplot(aes(x = hours_after_start, y = P, color = reactor)) +
-  geom_line(size = 0.75) +
+  geom_line() +
+  scale_x_continuous(breaks = breaks, labels = timepoints) +
   facet_wrap(~replicate, ncol = 1) +
-  geom_vline(xintercept = 168) +
+  geom_vline(xintercept = c(120, 168), color="#BB0000", linetype="dashed") +
   theme_classic() +
   labs(title = "Phosphorus Trends in Gravity-fed Column Reactors - Control Run", color = "Reactor:") +
   xlab("Hours After Start") +
   ylab ("Phosphorus Concentration (mg/L)") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
+        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
+```
+
+```{r}
+control_run <- icp_ic_results %>% 
+  filter(!replicate == "NA") %>%
+  filter(!treatment == "P")
+
+control_run %>% 
+  group_by(names) %>% 
+  summarise(meanP = mean(P))
 ```
 

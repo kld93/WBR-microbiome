@@ -16,8 +16,8 @@ editor_options:
 ## Load packages & set directory
 ```{r, include=FALSE}
 library(tidyverse)
-
-#setwd("C:/github/WBR-microbiome")
+library(ggpubr)
+library(rstatix)
 ```
 
 ## Making the plot
@@ -69,7 +69,7 @@ dmnd_N = dmnd_out_Ncycle_correct %>%
     left_join(annotation_map, relationship = "many-to-many") %>%
     group_by(fn, gene) %>%
     summarize(raw.count = n()) %>%
-    left_join(read_count_N) %>%
+    left_join(., read_count_N, by = "fn") %>%
     mutate(norm.count = (raw.count / count) * 1000000) #calculate counts
 ```
 
@@ -81,9 +81,11 @@ d2_N = dmnd_N[dmnd_N$gene %in% c("Nap", "Nar", "NirK", "NirS", "cNorB", "qNorZ",
 
 ### Group by treatment (i.e., "G" for milled, "W" for unmilled)
 ```{r}
-d3_N = dplyr::group_by(d2_N,gene, Treatment)
+d3_N = dplyr::group_by(d2_N, gene, Treatment)
 
-d3_N_avg = dplyr::summarize(d3_N, mean = mean(norm.count), sd = sd(norm.count))
+#d3_N_avg = dplyr::summarize(d3_N, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_N_avg = dplyr::summarize(d3_N, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
 ```
 
 ### Add a new column with corrected names
@@ -98,23 +100,27 @@ d3_N_avg$ord = factor(d3_N_avg$rename, levels=c("Nap","Nar","NirK","NirS","cNor"
 
 ### Create the dot chart
 ```{r}
-p = ggplot(d3_N_avg, aes(mean, Treatment)) + geom_point()
-
-p = p +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) + expand_limits(x = 0)
-
-p = p + facet_grid(ord ~ .)
-
-p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 10)) #add legend position none.
-
-p = p + labs(x = "Reads per million total reads", y = "Treatment")
-  
-p
+d3_N_avg %>% 
+  ggplot(aes(median, Treatment, color = Treatment)) +
+  geom_point() +
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(ord ~ .) +
+  scale_color_manual(values = c("darkorange", "deepskyblue2")) +
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="none", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Reads per million total reads", y = "Treatment")
 ```
 
 
 ## Stats
 ```{r}
-rpm_N <- d3_N
+rpm_N <- dmnd_N %>% 
+  ungroup()
 
 # subset by each N-cycle gene
 rpm_N_nap <- rpm_N %>% 
@@ -139,77 +145,101 @@ rpm_N_nosz <- rpm_N %>%
   filter(gene == "NosZ")
 ```
 
-#### boxplot
-```{r}
-#install.packages("ggpubr")
-library(ggpubr)
-
-# example:
-ggplot(rpm_N_nar, aes(Treatment, norm.count)) +
-  geom_boxplot()
-```
-
 #### check assumptions
 ```{r}
-#install.packages("rstatix")
-library(rstatix)
+## using: https://www.datanovia.com/en/lessons/t-test-in-r/
+
+# summary stats
+rpm_N_nap %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_N_nar %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_N_nirk %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_N_nirs %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_N_cnor %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_N_qnor %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_N_nosz %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+
+# summary boxplot
+ggboxplot(rpm_N_nap, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_N_nar, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_N_nirk, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_N_nirs, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_N_cnor, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_N_qnor, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_N_nosz, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
 
 # identify outliers
-rpm_N_nap %>% identify_outliers(norm.count)
-rpm_N_nar %>% identify_outliers(norm.count)
-rpm_N_nirk %>% identify_outliers(norm.count)
-rpm_N_nirs %>% identify_outliers(norm.count)
-rpm_N_cnor %>% identify_outliers(norm.count)
-rpm_N_qnor %>% identify_outliers(norm.count)
-rpm_N_nosz %>% identify_outliers(norm.count)
-### no extreme outliers detected
+rpm_N_nap %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_N_nar %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_N_nirk %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_N_nirs %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_N_cnor %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_N_qnor %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_N_nosz %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+### The result of this function yields zero rows meaning that there were not outliers in our database.
 
 # check normality
-rpm_N_nap %>% shapiro_test(norm.count) # p-value slightly under with this one, check with Q-Q
-rpm_N_nar %>% shapiro_test(norm.count) 
-rpm_N_nirk %>% shapiro_test(norm.count) 
-rpm_N_nirs %>% shapiro_test(norm.count) 
-rpm_N_cnor %>% shapiro_test(norm.count) 
-rpm_N_qnor %>% shapiro_test(norm.count) 
-rpm_N_nosz %>% shapiro_test(norm.count) 
-### the two p-values are greater than the significance level 0.05 indicating that 
+## The normality assumption can be checked by computing the Shapiro-Wilk test. 
+## If the data is normally distributed, the p-value should be greater than 0.05.
+rpm_N_nap %>% group_by(Treatment) %>% shapiro_test(norm.count) #U in this one is 0.03
+rpm_N_nar %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_N_nirk %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_N_nirs %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_N_cnor %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_N_qnor %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_N_nosz %>% group_by(Treatment) %>% shapiro_test(norm.count)
+
+ggqqplot(rpm_N_nap, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_N_nar, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_N_nirk, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_N_nirs, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_N_cnor, x = "norm.count", facet.by = "Treatment") 
+ggqqplot(rpm_N_qnor, x = "norm.count", facet.by = "Treatment") 
+ggqqplot(rpm_N_nosz, x = "norm.count", facet.by = "Treatment")
+### Above Q-Q plots: all the points fall approximately along the reference line for each group (so we can assume normality)
+### Plus, the two p-values are greater than the significance level 0.05 indicating that 
 ### the distribution of the data are not significantly different from the normal distribution. 
 ### In other words, we can assume the normality.
 
-# check normality with Q-Q plots
-ggqqplot(rpm_N_nap, "norm.count")
-### All the points fall approximately along the (45-degree) reference line, for each group. So we can assume normality of the data.
+# check equality of variances
+## This can be done using the Levene’s test. If the variances of groups are equal, the p-value should be greater than 0.05.
+rpm_N_nap %>% levene_test(norm.count ~ Treatment)
+rpm_N_nar %>% levene_test(norm.count ~ Treatment)
+rpm_N_nirk %>% levene_test(norm.count ~ Treatment)
+rpm_N_nirs %>% levene_test(norm.count ~ Treatment)
+rpm_N_cnor %>% levene_test(norm.count ~ Treatment)
+rpm_N_qnor %>% levene_test(norm.count ~ Treatment)
+rpm_N_nosz %>% levene_test(norm.count ~ Treatment)
 ```
 
-#### t-test for read count per million total reads:
+#### Welch's t-test for read count per million total reads:
 ```{r}
-t.test(norm.count ~ Treatment, data = rpm_N_nap, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-### p-value = 0.5798
-### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+t_test(norm.count ~ Treatment, data = rpm_N_nap, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.58
+### greater than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_N_nar, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-### p-value = 0.5885
-### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+t_test(norm.count ~ Treatment, data = rpm_N_nar, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.589
+### greater than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_N_nirk, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-### p-value = 0.0760
-### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+t_test(norm.count ~ Treatment, data = rpm_N_nirk, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.076
+### greater than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_N_nirs, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-### p-value = 0.9136
-### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+t_test(norm.count ~ Treatment, data = rpm_N_nirs, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.914
+### greater than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_N_cnor, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-### p-value = 0.1055
-### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+t_test(norm.count ~ Treatment, data = rpm_N_cnor, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.105
+### greater than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_N_qnor, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-### p-value = 0.2681
-### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+t_test(norm.count ~ Treatment, data = rpm_N_qnor, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.268
+### greater than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_N_nosz, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-### p-value = 0.4111
-### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+t_test(norm.count ~ Treatment, data = rpm_N_nosz, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+### p-value = 0.411
+### greater than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 ```
 
 
@@ -254,7 +284,9 @@ dmnd_ppk = dmnd_out_ppk %>%
 ```{r}
 d3_ppk = dplyr::group_by(dmnd_ppk, gene, Treatment)
 
-d3_ppk_avg = dplyr::summarize(d3_ppk, mean = mean(norm.count), sd = sd(norm.count))
+#d3_ppk_avg = dplyr::summarize(d3_ppk, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_ppk_avg = dplyr::summarize(d3_ppk, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
 ```
 
 ### Bind the ppk and N-cycle data together
@@ -271,15 +303,18 @@ d3_N_ppk$ord = factor(d3_N_ppk$rename, levels=c("Nap","Nar","NirK","NirS","cNor"
 
 ### Create COMBINED dot chart
 ```{r}
-p = ggplot(d3_N_ppk, aes(mean, Treatment)) + geom_point()
-
-p = p +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) + expand_limits(x = 0)
-
-p = p + facet_grid(ord ~ .)
-
-p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 12)) #add legend position none.
-
-p = p + labs(x = "Reads per million total reads", y = "Treatment")
-  
-p
+d3_N_ppk %>% 
+  ggplot(aes(median, Treatment, color = Treatment)) +
+  geom_point() +
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(ord ~ .) +
+  scale_color_manual(values = c("darkorange", "deepskyblue2")) +
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="none", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Reads per million total reads", y = "Treatment")
 ```

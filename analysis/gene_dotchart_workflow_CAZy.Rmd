@@ -15,6 +15,8 @@ editor_options:
 ## Load packages & set directory
 ```{r, include=FALSE}
 library(tidyverse)
+library(ggpubr)
+library(rstatix)
 ```
 
 ## Making the plot
@@ -80,59 +82,58 @@ d2_CAZy <- dmnd_AAfilter %>%
 ```{r}
 d3_CAZy = dplyr::group_by(d2_CAZy, classI, Treatment)
 
-d3_CAZy_avg = dplyr::summarize(d3_CAZy, mean = mean(norm.count), sd = sd(norm.count))
+#d3_CAZy_avg = dplyr::summarize(d3_CAZy, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_CAZy_avg = dplyr::summarize(d3_CAZy, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
 ```
 
 ### Add a new column with corrected names
 ```{r}
-d3_CAZy_avg$rename = c("AA0*", "AA0*", "AA1*", "AA1*", "AA10*", "AA10*", "AA11", "AA11", "AA12*", "AA12*", "AA13", "AA13", "AA14*", "AA14*", "AA15", "AA15", "AA16", "AA16", "AA17", "AA17", "AA1_1", "AA1_1", "AA1.2*", "AA1.2*", "AA1.3*", "AA1.3*", "AA2*", "AA2*", "AA3*", "AA3*", "AA3.1*", "AA3.1*", "AA3.2*", "AA3.2*", "AA3.3*", "AA3.3*", "AA4*", "AA4*", "AA5*", "AA5*", "AA5.1*", "AA5.1*", "AA5.2*", "AA5.2*", "AA6", "AA6", "AA7*", "AA7*", "AA8", "AA8", "AA9*", "AA9*")
+d3_CAZy_avg$rename = c("AA0*", "AA0*", "AA1*", "AA1*", "AA10*", "AA10*", "AA11", "AA11", "AA12*", "AA12*", "AA13", "AA13", "AA14*", "AA14*", "AA15", "AA15", "AA16", "AA16", "AA17", "AA17", "AA1.1", "AA1.1", "AA1.2*", "AA1.2*", "AA1.3", "AA1.3", "AA2*", "AA2*", "AA3*", "AA3*", "AA3.1", "AA3.1", "AA3.2*", "AA3.2*", "AA3.3", "AA3.3", "AA4*", "AA4*", "AA5*", "AA5*", "AA5.1*", "AA5.1*", "AA5.2*", "AA5.2*", "AA6", "AA6", "AA7*", "AA7*", "AA8", "AA8", "AA9*", "AA9*")
 
 #adds a column of these values, in this order (FYI - use d3_CAZy_avg to help make this list in the correct order)
 ```
 
 ### Put CAZy AA families in order for the facet
 ```{r}
-d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0*", "AA1*", "AA1.1", "AA1.2*", "AA1.3*", "AA2*", "AA3*", "AA3.1*", "AA3.2*", "AA3.3*", "AA4*", "AA5*", "AA5.1*", "AA5.2*", "AA6", "AA7*", "AA8", "AA9*", "AA10*", "AA11", "AA12*", "AA13", "AA14*", "AA15", "AA16", "AA17"))
+d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0*", "AA1*", "AA1.1", "AA1.2*", "AA1.3", "AA2*", "AA3*", "AA3.1", "AA3.2*", "AA3.3", "AA4*", "AA5*", "AA5.1*", "AA5.2*", "AA6", "AA7*", "AA8", "AA9*", "AA10*", "AA11", "AA12*", "AA13", "AA14*", "AA15", "AA16", "AA17"))
 ```
 
 ### Create the dot chart
 ```{r}
-#p = ggplot(d3_CAZy_avg, aes(mean, Treatment)) + geom_point()
-
-#p = p +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5))
-
-#p = p + facet_grid(ord ~ .)
-
-#p = p + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background =element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 5)) #add legend position none.
-
-#p = p + labs(x = "Reads per million total reads", y = "Treatment")
-  
-#p
+d3_CAZy_avg %>% 
+  ggplot(aes(median, Treatment, color = Treatment)) +
+  geom_point() +
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(ord ~ .) +
+  scale_color_manual(values = c("darkorange", "deepskyblue2")) +
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="none", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Reads per million total reads", y = "Treatment")
 ```
 
 
 ### Trim/subset the plot to exclude AA families with low gene presence, and create the dot chart
 ```{r}
-d3_CAZy_avg_over10 <- d3_CAZy_avg %>% 
-  filter(mean > 10)
+#d3_CAZy_avg_over10 <- d3_CAZy_avg %>% 
+  #filter(mean > 10)
 
-p2 = ggplot(d3_CAZy_avg_over10, aes(mean, Treatment)) + geom_point()
+# Plot:
 
-p2 = p2 +  geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) + expand_limits(x = 0)
-
-p2 = p2 + facet_grid(ord ~ .)
-
-p2 = p2 + theme(panel.background = element_rect(fill = "white"), panel.grid.major.x = element_blank(), strip.background = element_rect(fill="gold"), panel.grid.major.y = element_line(linetype=3, color="dark grey"), legend.position="none", axis.text.y = element_text(size = 10)) #add legend position none.
-
-p2 = p2 + labs(x = "Reads per million total reads", y = "Treatment")
-  
-p2
 ```
 
 
 ## Stats
 ```{r}
-rpm_CAZy <- d3_CAZy
+## using: https://www.datanovia.com/en/lessons/t-test-in-r/
+
+rpm_CAZy <- d2_CAZy %>% 
+  ungroup()
 
 # subset by each AA family
 rpm_CAZy_AA0 <- rpm_CAZy %>% 
@@ -214,194 +215,288 @@ rpm_CAZy_AA17 <- rpm_CAZy %>%
   filter(classI == "AA17")
 ```
 
-#### boxplot
-```{r}
-#install.packages("ggpubr")
-library(ggpubr)
-
-# example:
-ggplot(rpm_CAZy_AA17, aes(Treatment, norm.count)) +
-  geom_boxplot()
-```
-
 #### check assumptions
 ```{r}
-#install.packages("rstatix")
-library(rstatix)
+# summary stats
+rpm_CAZy_AA0 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA1 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA1_1 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA1_2 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA1_3 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA2 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA3 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA3_1 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA3_2 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA3_3 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA4 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA5 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA5_1 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA5_2 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA6 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA7 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA8 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA9 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA10 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA11 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA12 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA13 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA14 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA15 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA16 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+rpm_CAZy_AA17 %>% group_by(Treatment) %>% get_summary_stats(norm.count, type = "mean_sd")
+
+# summary boxplot
+ggboxplot(rpm_ppk, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA0, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA1, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA1_1, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA1_2, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA1_3, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA2, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA3, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA3_1, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA3_2, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA3_3, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA4, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA5, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA5_1, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA5_2, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA6, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA7, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA8, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA9, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA10, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA11, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA12, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA13, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA14, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA15, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA16, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
+ggboxplot(rpm_CAZy_AA17, x = "Treatment", y = "norm.count", ylab = "Reads per Million Total", xlab = "Treatment", add = "jitter")
 
 # identify outliers
-rpm_CAZy_AA0 %>% identify_outliers(norm.count)
-rpm_CAZy_AA1 %>% identify_outliers(norm.count)
-rpm_CAZy_AA1_1 %>% identify_outliers(norm.count)
-rpm_CAZy_AA1_2 %>% identify_outliers(norm.count)
-rpm_CAZy_AA1_3 %>% identify_outliers(norm.count)
-rpm_CAZy_AA2 %>% identify_outliers(norm.count)
-rpm_CAZy_AA3 %>% identify_outliers(norm.count)
-rpm_CAZy_AA3_1 %>% identify_outliers(norm.count)
-rpm_CAZy_AA3_2 %>% identify_outliers(norm.count)
-rpm_CAZy_AA3_3 %>% identify_outliers(norm.count)
-rpm_CAZy_AA4 %>% identify_outliers(norm.count)
-rpm_CAZy_AA5 %>% identify_outliers(norm.count)
-rpm_CAZy_AA5_1 %>% identify_outliers(norm.count)
-rpm_CAZy_AA5_2 %>% identify_outliers(norm.count)
-rpm_CAZy_AA6 %>% identify_outliers(norm.count)
-rpm_CAZy_AA7 %>% identify_outliers(norm.count)
-rpm_CAZy_AA8 %>% identify_outliers(norm.count)
-rpm_CAZy_AA9 %>% identify_outliers(norm.count)
-rpm_CAZy_AA10 %>% identify_outliers(norm.count)
-rpm_CAZy_AA11 %>% identify_outliers(norm.count)
-rpm_CAZy_AA12 %>% identify_outliers(norm.count)
-rpm_CAZy_AA13 %>% identify_outliers(norm.count)
-rpm_CAZy_AA14 %>% identify_outliers(norm.count)
-rpm_CAZy_AA15 %>% identify_outliers(norm.count)
-rpm_CAZy_AA16 %>% identify_outliers(norm.count)
-rpm_CAZy_AA17 %>% identify_outliers(norm.count)
-### no extreme outliers detected
+rpm_CAZy_AA0 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA1 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA1_1 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA1_2 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA1_3 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA2 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA3 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA3_1 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA3_2 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA3_3 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA4 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA5 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA5_1 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA5_2 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA6 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA7 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA8 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA9 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA10 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA11 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA12 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA13 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA14 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA15 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA16 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+rpm_CAZy_AA17 %>% group_by(Treatment) %>% identify_outliers(norm.count) 
+### The result of this function yields zero rows meaning that there were not outliers in our database.
 
 # check normality
-rpm_CAZy_AA0 %>% shapiro_test(norm.count) # p-value slightly under with this one, check with Q-Q
-rpm_CAZy_AA1 %>% shapiro_test(norm.count)
-rpm_CAZy_AA1_1 %>% shapiro_test(norm.count)
-rpm_CAZy_AA1_2 %>% shapiro_test(norm.count) # p-value is under with this one, check with Q-Q
-rpm_CAZy_AA1_3 %>% shapiro_test(norm.count) 
-rpm_CAZy_AA2 %>% shapiro_test(norm.count) # p-value slightly under with this one, check with Q-Q
-rpm_CAZy_AA3 %>% shapiro_test(norm.count)
-rpm_CAZy_AA3_1 %>% shapiro_test(norm.count)
-rpm_CAZy_AA3_2 %>% shapiro_test(norm.count)
-rpm_CAZy_AA3_3 %>% shapiro_test(norm.count)
-rpm_CAZy_AA4 %>% shapiro_test(norm.count)
-rpm_CAZy_AA5 %>% shapiro_test(norm.count)
-rpm_CAZy_AA5_1 %>% shapiro_test(norm.count) # p-value is under with this one, check with Q-Q
-rpm_CAZy_AA5_2 %>% shapiro_test(norm.count)
-rpm_CAZy_AA6 %>% shapiro_test(norm.count)
-rpm_CAZy_AA7 %>% shapiro_test(norm.count)
-rpm_CAZy_AA8 %>% shapiro_test(norm.count)
-rpm_CAZy_AA9 %>% shapiro_test(norm.count) # p-value slightly under with this one, check with Q-Q
-rpm_CAZy_AA10 %>% shapiro_test(norm.count)
-rpm_CAZy_AA11 %>% shapiro_test(norm.count) # p-value is under with this one, check with Q-Q
-rpm_CAZy_AA12 %>% shapiro_test(norm.count)
-rpm_CAZy_AA13 %>% shapiro_test(norm.count)
-rpm_CAZy_AA14 %>% shapiro_test(norm.count)
-rpm_CAZy_AA15 %>% shapiro_test(norm.count)
-rpm_CAZy_AA16 %>% shapiro_test(norm.count)
-rpm_CAZy_AA17 %>% shapiro_test(norm.count)
-### the two p-values are greater than the significance level 0.05 indicating that 
+## The normality assumption can be checked by computing the Shapiro-Wilk test. 
+## If the data is normally distributed, the p-value should be greater than 0.05.
+rpm_CAZy_AA0 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA1 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA1_1 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA1_2 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA1_3 %>% group_by(Treatment) %>% shapiro_test(norm.count) # M in this one is 0.03
+rpm_CAZy_AA2 %>% group_by(Treatment) %>% shapiro_test(norm.count) # U in this one is 0.03
+rpm_CAZy_AA3 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA3_1 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA3_2 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA3_3 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA4 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA5 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA5_1 %>% group_by(Treatment) %>% shapiro_test(norm.count) # M in this one is 0.006
+rpm_CAZy_AA5_2 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA6 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA7 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA8 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA9 %>% group_by(Treatment) %>% shapiro_test(norm.count) # M in this one is 0.04
+rpm_CAZy_AA10 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA11 %>% group_by(Treatment) %>% shapiro_test(norm.count) # M in this one is 0.006
+rpm_CAZy_AA12 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA13 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA14 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA15 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA16 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+rpm_CAZy_AA17 %>% group_by(Treatment) %>% shapiro_test(norm.count)
+### the two p-values are greater than the significance level 0.05 indicating that (except for the 5 marked above)
 ### the distribution of the data are not significantly different from the normal distribution. 
 ### In other words, we can assume the normality.
 
-# check normality with Q-Q plots
-ggqqplot(rpm_CAZy_AA0, "norm.count")
-ggqqplot(rpm_CAZy_AA1_2, "norm.count")
-ggqqplot(rpm_CAZy_AA2, "norm.count")
-ggqqplot(rpm_CAZy_AA5_1, "norm.count")
-ggqqplot(rpm_CAZy_AA9, "norm.count")
-ggqqplot(rpm_CAZy_AA11, "norm.count")
-### All the points fall approximately along the (45-degree) reference line, for each group. So we can assume normality of the data.
+ggqqplot(rpm_CAZy_AA0, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA1, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA1_1, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA1_2, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA1_3, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA2, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA3, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA3_1, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA3_2, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA3_3, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA4, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA5, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA5_1, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA5_2, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA6, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA7, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA8, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA9, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA10, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA11, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA12, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA13, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA14, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA15, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA16, x = "norm.count", facet.by = "Treatment")
+ggqqplot(rpm_CAZy_AA17, x = "norm.count", facet.by = "Treatment")
+### All the points fall approximately along the reference line, for each group. So we can assume normality of the data.
+
+# check equality of variances
+## This can be done using the Levene’s test. If the variances of groups are equal, the p-value should be greater than 0.05.
+rpm_CAZy_AA0 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA1 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA1_1 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA1_2 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA1_3 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA2 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA3 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA3_1 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA3_2 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA3_3 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA4 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA5 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA5_1 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA5_2 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA6 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA7 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA8 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA9 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA10 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA11 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA12 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA13 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA14 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA15 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA16 %>% levene_test(norm.count ~ Treatment)
+rpm_CAZy_AA17 %>% levene_test(norm.count ~ Treatment)
 ```
 
 #### t-test for read count per million total reads:
 ```{r}
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA0, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA0, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0318
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA1, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA1, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0391
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA1_1, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA1_1, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.186
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA1_2, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA1_2, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0407
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA1_3, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA1_3, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0523
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA2, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA2, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0018
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA3, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA3, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0204
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA3_1, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA3_1, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0522
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA3_2, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA3_2, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0157
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA3_3, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA3_3, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0509
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA4, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA4, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0300
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA5, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA5, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0443
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA5_1, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA5_1, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0381
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA5_2, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA5_2, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0211
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA6, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA6, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.1672
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA7, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA7, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0423
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA8, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA8, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.061
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA9, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA9, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0462
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA10, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA10, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0477
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA11, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA11, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0736
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA12, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA12, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0475
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA13, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA13, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0600
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA14, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA14, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0237
 ### less than significance level of 0.05, so the means of the U and M groups are significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA15, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA15, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.1039
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA16, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA16, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.0673
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 
-t.test(norm.count ~ Treatment, data = rpm_CAZy_AA17, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+t_test(norm.count ~ Treatment, data = rpm_CAZy_AA17, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.1316
 ### NOT less than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
 ```

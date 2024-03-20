@@ -240,6 +240,34 @@ t_test(norm.count ~ Treatment, data = rpm_N_qnor, alternative = "two.sided", pai
 t_test(norm.count ~ Treatment, data = rpm_N_nosz, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ### p-value = 0.411
 ### greater than significance level of 0.05, so the means of the U and M groups are NOT significantly different from each other.
+
+## Note about paper - adding "var.equal = FALSE" returns the same p-values. 
+## Use this argument if the equal variances assumption was not met, or if you want to be extra safe.
+#### With small samples sizes of 10 or fewer it's unlikely that normality tests will detect non-normality. Use Mann-Whitney
+```
+
+## Mann-Whitney U Test
+```{r}
+wilcox_test(norm.count ~ Treatment, data = rpm_N_nap, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+### p-value = 0.663
+
+wilcox_test(norm.count ~ Treatment, data = rpm_N_nar, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+### p-value = 1
+
+wilcox_test(norm.count ~ Treatment, data = rpm_N_nirk, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+### p-value = 0.081
+
+wilcox_test(norm.count ~ Treatment, data = rpm_N_nirs, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+### p-value = 1
+
+wilcox_test(norm.count ~ Treatment, data = rpm_N_cnor, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+### p-value = 0.081
+
+wilcox_test(norm.count ~ Treatment, data = rpm_N_qnor, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+### p-value = 0.383
+
+wilcox_test(norm.count ~ Treatment, data = rpm_N_nosz, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+### p-value = 0.663
 ```
 
 

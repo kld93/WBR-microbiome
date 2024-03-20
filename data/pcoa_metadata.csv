@@ -1,0 +1,7 @@
+samples,treatment,mass,yield,ratio,count
+7M,Milled,0.174,13.9,1.69,127230730
+8U,Unmilled,0.13,15.4,1.75,137219580
+9M,Milled,0.135,18.4,1.79,134273124
+10U,Unmilled,0.125,23.8,1.82,111982744
+11M,Milled,0.154,23.1,1.8,148186664
+12U,Unmilled,0.141,21,1.75,118610364

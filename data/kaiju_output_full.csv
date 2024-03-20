@@ -1,0 +1,110 @@
+name,treatment,percent,reads,total,percent_adj,taxon_id,taxon_name
+7G,Milled,45.483727,8604586,,,1224,Proteobacteria
+7G,Milled,14.688643,2778789,,,4890,Ascomycota
+7G,Milled,7.726664,1461726,,,976,Bacteroidetes
+7G,Milled,6.504978,1230608,,,200795,Chloroflexi
+7G,Milled,3.826468,723889,,,57723,Acidobacteria
+7G,Milled,3.390717,641454,,,203682,Planctomycetes
+7G,Milled,3.188824,603260,,,74201,Verrucomicrobia
+7G,Milled,2.057137,389168,,,201174,Actinobacteria
+7G,Milled,1.299037,245751,,,1134404,Ignavibacteriae
+7G,Milled,1.004803,190088,,,1239,Firmicutes
+7G,Milled,0.91834,173731,,,28890,Euryarchaeota
+7G,Milled,0.62816,118835,,,142182,Gemmatimonadetes
+7G,Milled,0.601672,113824,,,1798710,Candidatus Melainabacteria
+7G,Milled,0.575226,108821,,,40117,Nitrospirae
+7G,Milled,0.538415,101857,,,1117,Cyanobacteria
+7G,Milled,0.055862,10568,,,10239,Viruses
+7G,Milled,4.224206,799133,,,NA,cannot be assigned to a (non-viral) phylum
+7G,Milled,3.287122,621856,,,NA,belong to a (non-viral) phylum with less than 0.5% of all reads
+7G,Milled,70.261991,44697421,63615363.53,,NA,unclassified
+file,,percent,reads,,,taxon_id,taxon_name
+8W,Unmilled,41.821766,8261741,,,1224,Proteobacteria
+8W,Unmilled,9.534017,1883411,,,976,Bacteroidetes
+8W,Unmilled,9.198455,1817122,,,200795,Chloroflexi
+8W,Unmilled,8.191846,1618270,,,4890,Ascomycota
+8W,Unmilled,6.534539,1290875,,,74201,Verrucomicrobia
+8W,Unmilled,4.897198,967424,,,203682,Planctomycetes
+8W,Unmilled,4.557738,900365,,,57723,Acidobacteria
+8W,Unmilled,1.463463,289102,,,201174,Actinobacteria
+8W,Unmilled,1.157844,228728,,,1134404,Ignavibacteriae
+8W,Unmilled,1.09067,215458,,,1239,Firmicutes
+8W,Unmilled,0.880795,173998,,,1117,Cyanobacteria
+8W,Unmilled,0.61295,121086,,,40117,Nitrospirae
+8W,Unmilled,0.561073,110838,,,1798710,Candidatus Melainabacteria
+8W,Unmilled,0.544495,107563,,,142182,Gemmatimonadetes
+8W,Unmilled,0.513748,101489,,,203691,Spirochaetes
+8W,Unmilled,0.045058,8901,,,10239,Viruses
+8W,Unmilled,4.815354,951256,,,NA,cannot be assigned to a (non-viral) phylum
+8W,Unmilled,3.578986,707016,,,NA,belong to a (non-viral) phylum with less than 0.5% of all reads
+8W,Unmilled,71.207255,48855147,,,NA,unclassified
+file,,percent,reads,,,taxon_id,taxon_name
+9G,Milled,39.350018,6994678,,,1224,Proteobacteria
+9G,Milled,25.037102,4450480,,,4890,Ascomycota
+9G,Milled,6.737883,1197695,,,976,Bacteroidetes
+9G,Milled,6.643579,1180932,,,200795,Chloroflexi
+9G,Milled,3.099326,550922,,,74201,Verrucomicrobia
+9G,Milled,2.923157,519607,,,57723,Acidobacteria
+9G,Milled,2.650091,471068,,,203682,Planctomycetes
+9G,Milled,2.13715,379890,,,201174,Actinobacteria
+9G,Milled,1.116714,198502,,,1134404,Ignavibacteriae
+9G,Milled,0.913868,162445,,,1239,Firmicutes
+9G,Milled,0.682905,121390,,,28890,Euryarchaeota
+9G,Milled,0.505025,89771,,,203691,Spirochaetes
+9G,Milled,0.041068,7300,,,10239,Viruses
+9G,Milled,3.736674,664214,,,NA,cannot be assigned to a (non-viral) phylum
+9G,Milled,4.425441,786646,,,NA,belong to a (non-viral) phylum with less than 0.5% of all reads
+9G,Milled,73.523313,49361022,,,NA,unclassified
+file,,percent,reads,,,taxon_id,taxon_name
+10W,Unmilled,38.917313,6334100,,,1224,Proteobacteria
+10W,Unmilled,10.840033,1764301,,,200795,Chloroflexi
+10W,Unmilled,8.044107,1309242,,,4890,Ascomycota
+10W,Unmilled,8.032931,1307423,,,976,Bacteroidetes
+10W,Unmilled,5.921937,963842,,,74201,Verrucomicrobia
+10W,Unmilled,5.228047,850906,,,203682,Planctomycetes
+10W,Unmilled,4.104655,668065,,,57723,Acidobacteria
+10W,Unmilled,3.244739,528107,,,1134404,Ignavibacteriae
+10W,Unmilled,1.547028,251791,,,201174,Actinobacteria
+10W,Unmilled,1.139828,185516,,,1239,Firmicutes
+10W,Unmilled,0.852229,138707,,,1117,Cyanobacteria
+10W,Unmilled,0.76725,124876,,,1798710,Candidatus Melainabacteria
+10W,Unmilled,0.69529,113164,,,142182,Gemmatimonadetes
+10W,Unmilled,0.60002,97658,,,28890,Euryarchaeota
+10W,Unmilled,0.570756,92895,,,40117,Nitrospirae
+10W,Unmilled,0.048956,7968,,,10239,Viruses
+10W,Unmilled,5.261729,856388,,,NA,cannot be assigned to a (non-viral) phylum
+10W,Unmilled,4.183152,680841,,,NA,belong to a (non-viral) phylum with less than 0.5% of all reads
+10W,Unmilled,70.931613,39715582,,,NA,unclassified
+file,,percent,reads,,,taxon_id,taxon_name
+11G,Milled,40.621265,8048878,,,1224,Proteobacteria
+11G,Milled,26.218473,5195045,,,4890,Ascomycota
+11G,Milled,6.171856,1222919,,,976,Bacteroidetes
+11G,Milled,6.106964,1210061,,,200795,Chloroflexi
+11G,Milled,2.723513,539649,,,74201,Verrucomicrobia
+11G,Milled,2.715953,538151,,,57723,Acidobacteria
+11G,Milled,2.525208,500356,,,203682,Planctomycetes
+11G,Milled,2.036025,403427,,,201174,Actinobacteria
+11G,Milled,1.007411,199613,,,1134404,Ignavibacteriae
+11G,Milled,0.890265,176401,,,1239,Firmicutes
+11G,Milled,0.797958,158111,,,28890,Euryarchaeota
+11G,Milled,0.543568,107705,,,203691,Spirochaetes
+11G,Milled,0.039814,7889,,,10239,Viruses
+11G,Milled,3.645093,722255,,,NA,cannot be assigned to a (non-viral) phylum
+11G,Milled,3.956624,783983,,,NA,belong to a (non-viral) phylum with less than 0.5% of all reads
+11G,Milled,73.257458,54278889,,,NA,unclassified
+file,,percent,reads,,,taxon_id,taxon_name
+12W,Unmilled,45.654652,7865805,,,1224,Proteobacteria
+12W,Unmilled,10.070994,1735124,,,4890,Ascomycota
+12W,Unmilled,9.403222,1620074,,,976,Bacteroidetes
+12W,Unmilled,7.426993,1279591,,,74201,Verrucomicrobia
+12W,Unmilled,6.533948,1125729,,,200795,Chloroflexi
+12W,Unmilled,4.719465,813113,,,57723,Acidobacteria
+12W,Unmilled,3.181249,548095,,,203682,Planctomycetes
+12W,Unmilled,1.842872,317507,,,201174,Actinobacteria
+12W,Unmilled,0.97298,167634,,,1239,Firmicutes
+12W,Unmilled,0.835717,143985,,,1134404,Ignavibacteriae
+12W,Unmilled,0.616759,106261,,,1117,Cyanobacteria
+12W,Unmilled,0.093453,16101,,,10239,Viruses
+12W,Unmilled,4.152679,715462,,,NA,cannot be assigned to a (non-viral) phylum
+12W,Unmilled,4.495016,774443,,,NA,belong to a (non-viral) phylum with less than 0.5% of all reads
+12W,Unmilled,70.948696,42076258,,,NA,unclassified

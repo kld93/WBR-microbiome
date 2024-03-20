@@ -1,0 +1,9 @@
+fn,condition,port,timepoint,hours_after_start,hours_cat,count
+hf_cs_p2_t0_h0_prok,cs,2,0,0,A,106916432
+hf_cs_p2_t10_h100_prok,cs,2,10,100,F,42043388
+hf_drw_p2_t0_h0_prok,drw,2,0,0,A,39865952
+hf_drw_p2_t10_h100_prok,drw,2,10,100,F,43196848
+hf_drw_p2_t3_h8_prok,drw,2,3,8,B,31762030
+hf_drw_p2_t6_h16_prok,drw,2,6,16,C,77970968
+hf_drw_p2_t7_h28_prok,drw,2,7,28,D,55927668
+hf_drw_p2_t8_h52_prok,drw,2,8,52,E,56630062

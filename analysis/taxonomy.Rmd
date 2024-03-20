@@ -59,7 +59,12 @@ taxa_nolowabund %>%
   scale_fill_manual(values=as.vector(tol(12))) +
   xlab("Sample ID") +
   labs(fill = "Phylum") +
-  theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12), legend.text = element_text(size = 12), legend.title = element_text(size = 12), strip.text = element_text(size = 12))
+  theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 12), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
 ```
 
 

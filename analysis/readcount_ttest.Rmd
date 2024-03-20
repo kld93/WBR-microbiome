@@ -16,7 +16,7 @@ setwd("C:/github/WBR-microbiome")
 
 ## Load data
 ```{r}
-readcount <- read_csv("C:/github//WBR-microbiome/data/Woodchip_DNAquality.csv") %>%
+readcount <- read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_DNAquality.csv") %>%
   rename(fn = filename)
 ```
 
@@ -38,31 +38,14 @@ ggplot(readcount, aes(Treatment, count)) +
   geom_boxplot()
 ```
 
-t-test for read count:
+## Mann-Whitney U Tests (because this data doesn't meet assumptions for t-test)
 ```{r}
-t.test(count ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+## read count
+wilcox.test(count ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+
+## DNA yield (concentration)
+wilcox.test(yield ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+
+## initial woodchip mass
+wilcox.test(mass ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
 ```
-
-t-test for DNA yield:
-```{r}
-t.test(yield ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-```
-
-t-test for initial mass:
-```{r}
-t.test(mass ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-```
-
-
-Other types of t-tests?
-
-```{r}
-t.test(log(count) ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-```
-
-```{r}
-wilcox.test(count ~ Treatment, data = readcount, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
-```
-
-
-

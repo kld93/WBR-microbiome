@@ -7,15 +7,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-Set working directory
-```{r, include=FALSE}
-setwd("C:/github/WBR-microbiome/")
-```
-
 Load required packages
 ```{r, include=FALSE}
 library(tidyverse)
@@ -36,9 +27,25 @@ dist.mat = read_tsv("C:/github/WBR-microbiome/data/data_from_JPS/sketch_all_comb
   tidyr::spread(sample_2, dist) %>% 
   dplyr::select(-sample_1)
     
-#pcoa = pco(dist.mat, k = 5)$points %>%
-  #data.frame %>%
-  #dplyr::rename("x" = X1, "y" = X2)
+pcoa = pco(dist.mat, k = 5)$points %>%
+  data.frame %>%
+  dplyr::rename("x" = X1, "y" = X2)
+
+df = data.frame(pcoa)
+
+df$Sample = c("10U", "11M", "12U", "7M", "8U", "9M")
+
+df$type = c("Unmilled", "Milled", "Unmilled", "Milled", "Unmilled", "Milled")
+
+df %>% 
+  ggplot(aes(x = x, y = y, color = type, label = Sample)) +
+  geom_point(size = 2) +
+  geom_label_repel(show.legend = FALSE, segment.colour = NA) +
+  theme_bw() +
+  labs(color = "Sample Preparation") +
+  xlab("PCoA Axis 1") +
+  ylab("PCoA Axis 2") +
+  theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12), legend.text = element_text(size = 12), legend.title = element_text(size = 12), strip.text = element_text(size = 12))
 
 
 ## Katie's alternative (yields the same PCoA plot):
@@ -60,28 +67,14 @@ labs_mash <- c(glue("PCo 1 ({pretty_pe_mash[1]}%)"), #setup for axis labels
 ## Main formatted plot for paper:
 positions_mash %>% 
   as_tibble(rownames = "samples") %>% 
-  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
+  mutate(treatment = c("Unmilled", "Milled", "Unmilled", "Milled", "Unmilled", "Milled")) %>% 
+  mutate(label = c("U2", "M3", "U3", "M1", "U1", "M2")) %>% 
   ggplot(aes(x = pcoa1, y = pcoa2, color = treatment)) +
   geom_point(size = 3) +
+  geom_label_repel(aes(label = label), show.legend = FALSE, segment.color = NA) +
+  scale_color_manual(values = c("darkorange", "deepskyblue2")) +
+  theme_classic() +
   labs(x = labs_mash[1], y = labs_mash[2], color = "Treatment")
-```
-
-```{r}
-#df = data.frame(pcoa)
-
-#df$Sample = c("10U", "11M", "12U", "7M", "8U", "9M")
-
-#df$type = c("Unmilled", "Milled", "Unmilled", "Milled", "Unmilled", "Milled")
-
-#df %>% 
-  #ggplot(aes(x = x, y = y, color = type, label = Sample)) +
-  #geom_point(size = 2) +
-  #geom_label_repel(show.legend = FALSE, segment.colour = NA) +
-  #theme_bw() +
-  #labs(color = "Sample Preparation") +
-  #xlab("PCoA Axis 1") +
-  #ylab("PCoA Axis 2") +
-  #theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12), legend.text = element_text(size = 12), legend.title = element_text(size = 12), strip.text = element_text(size = 12))
 ```
 
 ```{r}
@@ -89,17 +82,19 @@ positions_mash %>%
 dist_mat_clean <- dist.mat %>% 
   as.data.frame()
 
-rownames(dist_mat_clean) <- c("10U", "11M", "12U", "7M", "8U", "9M")
-colnames(dist_mat_clean) <- c("10U", "11M", "12U", "7M", "8U", "9M")
+rownames(dist_mat_clean) <- c("U2", "M3", "U3", "M1", "U1", "M2")
+colnames(dist_mat_clean) <- c("U2", "M3", "U3", "M1", "U1", "M2")
 
 distance <- dist_mat_clean %>% 
   as_tibble() %>% 
-  mutate("sample_id" = c("10U", "11M", "12U", "7M", "8U", "9M")) %>% 
-  select(c("sample_id", "10U", "11M", "12U", "7M", "8U", "9M"))
+  mutate("sample_id" = c("U2", "M3", "U3", "M1", "U1", "M2")) %>% 
+  select(c("sample_id", "U2", "M3", "U3", "M1", "U1", "M2"))
 
 metadata <- read.csv("C:/github/WBR-microbiome/data/pcoa_metadata.csv") %>% 
-  rename("sample_id" = "samples") %>% 
-  as_tibble()
+  #rename("sample_id" = "samples") %>% 
+  as_tibble() %>% 
+  mutate("sample_id" = c("M1", "U1", "M2", "U2", "M3", "U3")) %>% 
+  select(!samples)
 
 meta_distance <- inner_join(metadata, distance)
 
@@ -107,6 +102,6 @@ all_dist <- meta_distance %>%
   select(all_of(.[["sample_id"]])) %>% 
   as.dist()
 
-adonis2(all_dist ~ treatment, data = meta_distance) #returns p-value of 0.1 so the groups are not significantly different
+adonis2(all_dist ~ treatment + mass + yield + count, data = meta_distance) #returns p-value of 0.1 so the groups are not significantly different
 ```
 

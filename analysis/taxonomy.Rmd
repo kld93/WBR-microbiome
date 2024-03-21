@@ -39,14 +39,14 @@ taxa_nolowabund <- taxonomy %>%
   dplyr::filter(!taxon_name == "cannot be assigned to a (non-viral) phylum") %>% 
   dplyr::filter(!taxon_name == "belong to a (non-viral) phylum with less than 0.5% of all reads") %>% 
   mutate(taxon_name = replace(taxon_name, taxon_name == 'Ascomycota', 'Ascomycota (fungi)')) %>% 
-  mutate(name = ifelse(name == "7G", "7M", name)) %>% 
-  mutate(name = ifelse(name == "9G", "9M", name)) %>% 
-  mutate(name = ifelse(name == "11G", "11M", name)) %>% 
-  mutate(name = ifelse(name == "8W", "8U", name)) %>% 
-  mutate(name = ifelse(name == "10W", "10U", name)) %>% 
-  mutate(name = ifelse(name == "12W", "12U", name))
+  mutate(name = ifelse(name == "7G", "M1", name)) %>% 
+  mutate(name = ifelse(name == "9G", "M2", name)) %>% 
+  mutate(name = ifelse(name == "11G", "M3", name)) %>% 
+  mutate(name = ifelse(name == "8W", "U1", name)) %>% 
+  mutate(name = ifelse(name == "10W", "U2", name)) %>% 
+  mutate(name = ifelse(name == "12W", "U3", name))
 
-sample_order <- c('7M', '9M', '11M', '8U', '10U', '12U') 
+sample_order <- c('M1', 'M2', 'M3', 'U1', 'U2', 'U3') 
 
 phyla_order <- c('Proteobacteria', 'Ascomycota (fungi)', 'Bacteroidetes', 'Chloroflexi', 'Verrucomicrobia', 'cannot be assigned to a (non-viral) phylum', 'belong to a (non-viral) phylum with less than 0.5% of all reads', 'Acidobacteria', 'Planctomycetes', 'Actinobacteria', 'Ignavibacteriae', 'Firmicutes')
 

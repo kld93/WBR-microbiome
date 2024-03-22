@@ -38,7 +38,7 @@ icp_ic_results %>%
   #filter(!treatment == "P") %>% 
   ggplot(aes(x = hours_after_start, y = P, color = reactor)) +
   geom_line() +
-  scale_x_continuous(breaks = breaks, labels = timepoints) +
+  scale_x_continuous(breaks = breaks_C, labels = timepoints_C) +
   facet_wrap(~replicate, ncol = 1) +
   geom_vline(xintercept = c(120, 168, 288, 336, 456, 504), color="#BB0000", linetype="dashed") +
   theme_classic() +
@@ -61,11 +61,11 @@ timepoints_P <- ifelse(breaks_P > 120, breaks_P - 336, breaks_P)
 icp_ic_results %>% 
   filter(!replicate == "NA") %>%
   filter(!treatment == "Control") %>% 
-  ggplot(aes(x = hours_after_start, y = P, color = reactor)) +
+  ggplot(aes(x = hours_after_start, y = SO4, color = reactor)) +
   geom_line() +
   scale_x_continuous(breaks = breaks_P, labels = timepoints_P) +
   facet_wrap(~replicate, ncol = 1) +
-  #geom_vline(xintercept = c(120, 168, 288, 336, 456, 504), color="#BB0000", linetype="dashed") +
+  geom_vline(xintercept = c(456, 504), color="#BB0000", linetype="dashed") +
   theme_classic() +
   labs(title = "Phosphorus Trends in Gravity-fed Column Reactors - Phosphorus Run", color = "Reactor:") +
   xlab("Hours After Start") +

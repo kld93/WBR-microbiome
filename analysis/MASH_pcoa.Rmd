@@ -15,6 +15,7 @@ library(ggplot2)
 #install.packages("labdsv")
 library(labdsv)
 library(ggrepel)
+library(vegan)
 ```
 
 This is output of the MASH run on the day this R file was made. See the MASH notebook in the O2-legacy folder. 
@@ -61,8 +62,7 @@ percent_explained_mash <- 100* pcoa_mash$eig / sum(pcoa_mash$eig) #setup for axi
 
 pretty_pe_mash <- format(round(percent_explained_mash[1:2], digits = 1), nsmall = 1, trim = TRUE) #setup for axis labels
 
-labs_mash <- c(glue("PCo 1 ({pretty_pe_mash[1]}%)"), #setup for axis labels
-          glue("PCo 2 ({pretty_pe_mash[2]}%)"))
+labs_mash <- c(glue("PCo 1 ({pretty_pe_mash[1]}%)"), glue("PCo 2 ({pretty_pe_mash[2]}%)")) #setup for axis labels
 
 ## Main formatted plot for paper:
 positions_mash %>% 

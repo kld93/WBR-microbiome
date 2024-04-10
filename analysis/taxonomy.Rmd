@@ -19,6 +19,7 @@ library(vegan)
 library(glue)
 library(broom)
 library(ggrepel)
+library(rstatix)
 ```
 
 ## Load data
@@ -37,7 +38,7 @@ taxonomy <- read_csv("C:/github/WBR-microbiome/data/kaiju_output_100nounclassifi
 taxa_nolowabund <- taxonomy %>% 
   dplyr::filter(percent > 1) %>% # Remove phyla that are < 1% abundant
   dplyr::filter(!taxon_name == "cannot be assigned to a (non-viral) phylum") %>% 
-  dplyr::filter(!taxon_name == "belong to a (non-viral) phylum with less than 0.5% of all reads") %>% 
+  dplyr::filter(!taxon_name == "belong to a (non-viral) phylum with less than 0.5% of all reads") %>%
   mutate(taxon_name = replace(taxon_name, taxon_name == 'Ascomycota', 'Ascomycota (fungi)')) %>% 
   mutate(name = ifelse(name == "7G", "M1", name)) %>% 
   mutate(name = ifelse(name == "9G", "M2", name)) %>% 
@@ -77,9 +78,9 @@ ascomycota <- taxa_nolowabund %>%
   filter(taxon_name == "Ascomycota (fungi)")
 ```
 
-Mann-Whitney U test for read count of fungi in U vs M samples:
+t test for read count of fungi in U vs M samples:
 ```{r}
-wilcox.test(reads ~ treatment, data = ascomycota, alternative = "two.sided", paired = FALSE, conf.level = 0.95, exact = FALSE)
+t_test(reads ~ treatment, data = ascomycota, alternative = "two.sided", paired = FALSE, conf.level = 0.95)
 ```
 
 
@@ -108,7 +109,7 @@ shared <- taxa_for_pcoa %>%
   #summarize(total = sum(value)) %>% 
   #arrange(total) #this shows that 10W is the lowest 10W is the lowest at 15700522 reads
   mutate(total = sum(value)) %>%
-  filter(total > 15700521) %>% 
+  #filter(total > 15700521) %>% 
   group_by(name) %>% 
   mutate(total = sum(value)) %>% 
   filter(total != 0) %>% 
@@ -126,7 +127,7 @@ shared <- as.matrix(shared) #input for the functions from vegan (rows are sample
 #### Calculating distances 
 ```{r}
 set.seed(8675309)
-dist <- avgdist(shared, dmethod = "bray", sample = 15700522) #rarefied based on lowest sample total (10W = 15700522)
+dist <- avgdist(shared, dmethod = "bray", sample = 180000) #rarefied based on lowest sample total (10W = 15700522)
 nmds <- metaMDS(dist)
 
 scores(nmds) %>% 
@@ -177,92 +178,5 @@ cumsum(percent_explained) # you'd have to extend to the 4th axis to get 100% of 
 metadata <- read.csv("C:/github/WBR-microbiome/data/pcoa_metadata.csv")
 
 adonis2(dist_matrix ~ treatment, data = metadata)
+#p-value = 0.1
 ```
-
-
-
-
-(Not entirely sure what to make of the below plot - keep for now)
-
-## Make a biplot
-```{r}
-set.seed(8675309)
-
-# generate distance matrix - bray-curtis/rarefied to 2460412
-dist <- avgdist(shared, dmethod = "bray", sample = 15700522) #rarefied based on lowest sample total (10W = 2460412)
-
-# generate nmds ordination
-nmds <- metaMDS(dist)
-
-nmds_positions <- scores(nmds) %>% 
-  as_tibble(rownames = "Group")
-
-nmds_positions %>% 
-  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
-  ggplot(aes(x = NMDS1, y = NMDS2, color = treatment)) +
-  geom_point()
-
-# what taxa are responsible for the position of each sample on this ordination?
-# generate subsampled shared file
-shared_tbl <- shared %>% 
-  as_tibble(rownames = "Group")
-
-subsample_shared_tbl <- shared_tbl %>% 
-  pivot_longer(-Group) %>% 
-  group_by(Group) %>% 
-  mutate(total = sum(value)) %>% 
-  filter(total > 2460412) %>% 
-  uncount(value) %>% 
-  slice_sample(n = 2460412) %>% 
-  count(Group, name) %>% 
-  pivot_wider(names_from = "name", values_from = "n", values_fill = 0) %>% 
-  pivot_longer(-Group)
-
-# correlate taxa with x and y axis positions
-nmds_positions
-subsample_shared_tbl
-
-nmds_shared <- inner_join(subsample_shared_tbl, nmds_positions)
-
-cor_x <- nmds_shared %>% 
-  nest(data = -name) %>% 
-  mutate(cor_x = map(data, ~cor.test(.x$value, .x$NMDS1, method = "spearman", exact = FALSE) %>% tidy())) %>% 
-  unnest(cor_x) %>% 
-  select(name, estimate, p.value)
-
-cor_y <- nmds_shared %>% 
-  nest(data = -name) %>% 
-  mutate(cor_y = map(data, ~cor.test(.x$value, .x$NMDS2, method = "spearman", exact = FALSE) %>% tidy())) %>% 
-  unnest(cor_y) %>% 
-  select(name, estimate, p.value)
-
-correlations <- inner_join(cor_x, cor_y, by = "name")
-
-correlations %>% 
-  filter(p.value.x < 0.05 | p.value.y < 0.05)
-
-# plot segments from (0,0) to (Rx, Ry)
-high_corr <- correlations
-
-high_corr %>% 
-  ggplot(aes(x = 0, xend = estimate.x, y = 0, yend = estimate.y)) +
-  geom_segment()
-
-nmds_positions %>% 
-  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
-  ggplot(aes(x = NMDS1, y = NMDS2, color = treatment)) +
-  geom_point() +
-  geom_segment(data = high_corr, aes(x = 0, xend = estimate.x, y = 0, yend = estimate.y), inherit.aes = FALSE)
-
-# plot text at (Rx, Ry)
-nmds_positions %>% 
-  mutate(treatment = c("Milled", "Unmilled", "Milled", "Unmilled", "Milled", "Unmilled")) %>% 
-  ggplot(aes(x = NMDS1, y = NMDS2, color = treatment)) +
-  geom_point() +
-  #geom_segment(data = high_corr, aes(x = 0, xend = estimate.x, y = 0, yend = estimate.y), inherit.aes = FALSE) +
-  geom_text_repel(data = high_corr, aes(x = estimate.x, y = estimate.y, label = name), min.segment.length = 0.05, inherit.aes = FALSE) +
-  geom_point(data = high_corr, color = "black", aes(x = estimate.x, y = estimate.y), inherit.aes = FALSE)
-```
-
-Biplot - shows how the abundance of each OTU correlates with the position of each sample on the x and y axis of the ordination. 
-Helpful for understanding the drivers of the differences we see in the communities.

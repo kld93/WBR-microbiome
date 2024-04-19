@@ -23,7 +23,7 @@ icp_ic_results <- read_csv("C:/github/WBR-microbiome/data/GFBR_icp_ic_results.cs
   unite(datetime, c(date, time), sep = " ", remove = FALSE) #combine date and time
 ```
 
-## P trends across length of each run
+## Includes both replicates
 ```{r}
 ## Subset the data
 control_run <- icp_ic_results %>% 
@@ -155,8 +155,7 @@ mean_NPrun <- rep_mean_results %>%
   mutate(initial_p = ifelse(cycle == 1, 0.188, 0.152))
 
 ## put the subsets back together into one dataset
-tidyset <- rbind(mean_controlrun, mean_Prun, mean_NPrun) #%>% 
-  #mutate(pchange = initial_p - mean_P)
+tidyset <- rbind(mean_controlrun, mean_Prun, mean_NPrun)
 
 tidyset %>% 
   mutate(decreaseP = ifelse(initial_p > mean_P, TRUE, FALSE)) %>% 
@@ -262,5 +261,65 @@ ggarrange(control_plot, P_plot, NP_plot, ncol = 1,
           labels = c("Control", "Phosphate", "Phosphate/Nitrate"), 
           hjust = -1, vjust = 1.5,
           common.legend = TRUE)
+```
+
+## All elements/compounds
+```{r}
+# Control plot
+tidyset %>%
+  filter(treatment == "Control") %>%
+  pivot_longer(cols = c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, 
+                        mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4), 
+               names_to = "chemical", values_to = "concentration") %>%
+  ggplot(aes(x = hours_after_start, y = concentration, color = reactor)) + 
+  geom_line() +
+  facet_wrap(~chemical, ncol = 4, nrow = 3, scales = "free") +
+  scale_x_continuous(breaks = breaks_C, labels = timepoints_C) +
+  geom_vline(xintercept = c(120, 168, 288), color="#BB0000", linetype="dashed") +
+  theme_classic() +
+  labs(color = "Reactor:") +
+  xlab("Hours After Start") +
+  ylab ("Concentration (mg/L)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"),
+        panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
+        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
+
+# P run plot
+tidyset %>%
+  filter(treatment == "P") %>%
+  pivot_longer(cols = c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, 
+                        mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4), 
+               names_to = "chemical", values_to = "concentration") %>%
+  ggplot(aes(x = hours_after_start, y = concentration, color = reactor)) + 
+  geom_line() +
+  facet_wrap(~chemical, ncol = 4, nrow = 3, scales = "free") +
+  scale_x_continuous(breaks = breaks_P, labels = timepoints_P) +
+  geom_vline(xintercept = c(456, 504, 624), color="#BB0000", linetype="dashed") +
+  theme_classic() +
+  labs(color = "Reactor:") +
+  xlab("Hours After Start") +
+  ylab ("Concentration (mg/L)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"),
+        panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
+        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
+
+# NP run plot
+tidyset %>%
+  filter(treatment == "P+N") %>%
+  pivot_longer(cols = c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, 
+                        mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4), 
+               names_to = "chemical", values_to = "concentration") %>%
+  ggplot(aes(x = hours_after_start, y = concentration, color = reactor)) + 
+  geom_line() +
+  facet_wrap(~chemical, ncol = 4, nrow = 3, scales = "free") +
+  scale_x_continuous(breaks = breaks_N, labels = timepoints_N) +
+  geom_vline(xintercept = c(792, 840, 960), color="#BB0000", linetype="dashed") +
+  theme_classic() +
+  labs(color = "Reactor:") +
+  xlab("Hours After Start") +
+  ylab ("Concentration (mg/L)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"),
+        panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
+        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
 ```
 

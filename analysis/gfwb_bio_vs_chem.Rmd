@@ -15,6 +15,9 @@ editor_options:
 #install.packages("tidyverse")
 library(tidyverse)
 library(ggpubr)
+#install.packages("psych")
+library(psych)
+library(ggpubr)
 ```
 
 ## Load data
@@ -109,13 +112,14 @@ NP_run %>%
 ```{r}
 ## average the reps together
 rep_mean_results <- icp_ic_results %>% 
+  mutate(P_adj = ifelse(P < 0, 0, P)) %>% 
   group_by(names) %>% 
   mutate(mean_Al = mean(Al),
          mean_Ca = mean(Ca),
          mean_Fe = mean(Fe),
          mean_Mg = mean(Mg),
          mean_Mn = mean(Mn),
-         mean_P = mean(P),
+         mean_P = mean(P_adj),
          mean_S = mean(S),
          mean_Cl = mean(Cl),
          mean_NO2 = mean(NO2),
@@ -123,7 +127,7 @@ rep_mean_results <- icp_ic_results %>%
          mean_PO4 = mean(PO4),
          mean_SO4 = mean(SO4)) %>% 
   ungroup() %>% 
-  select(!c(sample_id, ICP_IC_batch, replicate, initial_p, initial_no3, Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4)) %>% 
+  select(!c(sample_id, ICP_IC_batch, replicate, initial_p, initial_no3, Al, Ca, Fe, Mg, Mn, P, P_adj, S, Cl, NO2, NO3, PO4, SO4)) %>% 
   distinct(.keep_all = TRUE)
 
 ## pull out stock measurements
@@ -157,6 +161,12 @@ mean_NPrun <- rep_mean_results %>%
 ## put the subsets back together into one dataset
 tidyset <- rbind(mean_controlrun, mean_Prun, mean_NPrun)
 
+breaks <- tidyset %>%
+  pull(hours_after_start) %>% 
+  unique()
+
+timepoints <- c(timepoints_C, timepoints_P, timepoints_N)
+
 tidyset %>% 
   mutate(decreaseP = ifelse(initial_p > mean_P, TRUE, FALSE)) %>% 
   mutate(P_change = initial_p - mean_P) %>% 
@@ -173,17 +183,11 @@ tidyset %>%
         panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
         panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
 
-### left off here
+### left off here - should I use P removed or just mean P? Or % P removed?
 ```
 
 ## Cummulative plots
 ```{r}
-breaks <- tidyset %>%
-  pull(hours_after_start) %>% 
-  unique()
-
-timepoints <- c(timepoints_C, timepoints_P, timepoints_N)
-
 # Full plot
 tidyset %>%
   filter(!reactor == "STOCK") %>%
@@ -280,7 +284,8 @@ tidyset %>%
   labs(color = "Reactor:") +
   xlab("Hours After Start") +
   ylab ("Concentration (mg/L)") +
-  theme(plot.margin = unit(c(1,1,1,1), "cm"),
+  theme(legend.position = "bottom",
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
         panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
         panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
 
@@ -299,7 +304,8 @@ tidyset %>%
   labs(color = "Reactor:") +
   xlab("Hours After Start") +
   ylab ("Concentration (mg/L)") +
-  theme(plot.margin = unit(c(1,1,1,1), "cm"),
+  theme(legend.position = "bottom",
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
         panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
         panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
 
@@ -318,8 +324,54 @@ tidyset %>%
   labs(color = "Reactor:") +
   xlab("Hours After Start") +
   ylab ("Concentration (mg/L)") +
-  theme(plot.margin = unit(c(1,1,1,1), "cm"),
+  theme(legend.position = "bottom",
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
         panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
         panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
+```
+
+## Correlation analysis
+```{r}
+Pchange <- tidyset %>% 
+  mutate(decreaseP = ifelse(initial_p > mean_P, TRUE, FALSE)) %>% 
+  mutate(P_change = initial_p - mean_P)
+
+C_correlation <- Pchange %>% 
+  filter(treatment == "Control") %>% 
+  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4, P_change)) %>% 
+  select(!c(mean_NO2, mean_PO4)) # columns are all 0, remove to avoid issues with correlation analysis
+
+P_correlation <- Pchange %>% 
+  filter(treatment == "P") %>% 
+  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4, P_change))
+
+N_correlation <- Pchange %>% 
+  filter(treatment == "P+N") %>% 
+  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4, P_change))
+
+# Correlation plot for all elements/compounds (use spearman since it's nonparametric and does not have assumptions about distribution)
+pairs.panels(C_correlation, method = "spearman", stars = TRUE)
+pairs.panels(P_correlation, method = "spearman", stars = TRUE)
+pairs.panels(N_correlation, method = "spearman", stars = TRUE)
+
+# Run correlation individually:
+cor(P_correlation[,unlist(lapply(P_correlation, is.numeric))])
+
+cor.test(P_correlation$mean_P, P_correlation$mean_Fe, method = "spearman")
+### p value = 0.2127
+```
+
+## Modeling
+```{r}
+library("lme4")
+
+model_treatment <- glm(formula = mean_P ~ treatment, data = tidyset)
+summary(model_treatment)
+
+model_reactor <- glm(formula = mean_P ~ reactor, data = tidyset)
+summary(model_reactor)
+
+model <- glm(formula = mean_P ~ reactor + treatment, data = tidyset)
+summary(model)
 ```
 

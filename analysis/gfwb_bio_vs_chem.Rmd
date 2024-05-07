@@ -161,10 +161,22 @@ mean_NPrun <- rep_mean_results %>%
   mutate(initial_p = ifelse(reactor == "CNS", 0.188, initial_p))
 
 ## put the subsets back together into one dataset
-tidyset <- rbind(mean_controlrun, mean_Prun, mean_NPrun) %>% 
-  mutate(decreaseP = ifelse(initial_p > mean_P, TRUE, FALSE)) %>% 
-  mutate(P_change = initial_p - mean_P) %>%
-  mutate(pct_P_removal = ((initial_p - mean_P)/initial_p) * 100)
+tidyset <- rbind(mean_controlrun, mean_Prun, mean_NPrun) %>%
+  rename(Al = mean_Al,
+         Ca = mean_Ca,
+         Fe = mean_Fe,
+         Mg = mean_Mg,
+         Mn = mean_Mn,
+         P = mean_P,
+         S = mean_S,
+         Cl = mean_Cl,
+         NO2 = mean_NO2,
+         NO3 = mean_NO3,
+         PO4 = mean_PO4,
+         SO4 = mean_SO4) %>%
+  mutate(decreaseP = ifelse(initial_p > P, TRUE, FALSE)) %>% 
+  mutate(P_removal = initial_p - P) %>%
+  mutate(pct_P_removal = ((initial_p - P)/initial_p) * 100)
 
 breaks <- tidyset %>%
   pull(hours_after_start) %>% 
@@ -194,11 +206,11 @@ tidyset %>%
 # Full plot
 tidyset %>%
   filter(!reactor == "STOCK") %>%
-  ggplot(aes(x = hours_after_start, y = mean_P, color = reactor)) + 
+  ggplot(aes(x = hours_after_start, y = P, color = reactor)) + 
   geom_line() +
   scale_x_continuous(breaks = breaks, labels = timepoints) +
   #facet_wrap(~treatment, ncol = 1) +
-  geom_vline(xintercept = c(120, 168, 288, 336, 456, 504, 624, 672, 792, 840, 960), color="#BB0000", linetype="dashed") +
+  geom_vline(xintercept = c(120, 168, 288, 336, 456, 504, 624, 672, 792, 840, 960), color = "#BB0000", linetype = "dashed") +
   theme_classic() +
   labs(color = "Reactor:") +
   xlab("Hours After Start") +
@@ -211,7 +223,7 @@ tidyset %>%
 control_plot <- tidyset %>%
   filter(!reactor == "STOCK") %>%
   filter(treatment == "Control") %>%
-  ggplot(aes(x = hours_after_start, y = mean_P, color = reactor)) + 
+  ggplot(aes(x = hours_after_start, y = P, color = reactor)) + 
   geom_line() +
   scale_x_continuous(breaks = breaks_C, labels = timepoints_C) +
   #facet_wrap(~treatment, ncol = 1) +
@@ -230,7 +242,7 @@ control_plot <- tidyset %>%
 P_plot <- tidyset %>%
   filter(!reactor == "STOCK") %>%
   filter(treatment == "P") %>%
-  ggplot(aes(x = hours_after_start, y = mean_P, color = reactor)) + 
+  ggplot(aes(x = hours_after_start, y = P, color = reactor)) + 
   geom_line() +
   scale_x_continuous(breaks = breaks_P, labels = timepoints_P) +
   #facet_wrap(~treatment, ncol = 1) +
@@ -249,7 +261,7 @@ P_plot <- tidyset %>%
 NP_plot <- tidyset %>%
   filter(!reactor == "STOCK") %>%
   filter(treatment == "P+N") %>%
-  ggplot(aes(x = hours_after_start, y = mean_P, color = reactor)) + 
+  ggplot(aes(x = hours_after_start, y = P, color = reactor)) + 
   geom_line() +
   scale_x_continuous(breaks = breaks_N, labels = timepoints_N) +
   #facet_wrap(~treatment, ncol = 1) +
@@ -275,8 +287,7 @@ ggarrange(control_plot, P_plot, NP_plot, ncol = 1,
 # Control plot
 tidyset %>%
   filter(treatment == "Control") %>%
-  pivot_longer(cols = c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, 
-                        mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4), 
+  pivot_longer(cols = c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4), 
                names_to = "chemical", values_to = "concentration") %>%
   ggplot(aes(x = hours_after_start, y = concentration, color = reactor)) + 
   geom_line() +
@@ -295,8 +306,7 @@ tidyset %>%
 # P run plot
 tidyset %>%
   filter(treatment == "P") %>%
-  pivot_longer(cols = c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, 
-                        mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4), 
+  pivot_longer(cols = c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4), 
                names_to = "chemical", values_to = "concentration") %>%
   ggplot(aes(x = hours_after_start, y = concentration, color = reactor)) + 
   geom_line() +
@@ -315,8 +325,7 @@ tidyset %>%
 # NP run plot
 tidyset %>%
   filter(treatment == "P+N") %>%
-  pivot_longer(cols = c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, 
-                        mean_S, mean_Cl, mean_NO2, mean_NO3, mean_PO4, mean_SO4), 
+  pivot_longer(cols = c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4), 
                names_to = "chemical", values_to = "concentration") %>%
   ggplot(aes(x = hours_after_start, y = concentration, color = reactor)) + 
   geom_line() +
@@ -338,48 +347,42 @@ tidyset %>%
 C_CNS_corr <- tidyset %>% 
   filter(treatment == "Control") %>%
   filter(reactor == "CNS") %>% 
-  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, 
-           mean_NO2, mean_NO3, mean_PO4, mean_SO4, initial_p, P_change, pct_P_removal)) %>% 
-  select(!c(mean_NO2, mean_PO4)) # columns are all 0, remove to avoid issues with correlation analysis
+  select(c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4, initial_p, P_removal, pct_P_removal)) #%>% 
+  #select(!c(mean_NO2, mean_PO4)) # columns are all 0, remove to avoid issues with correlation analysis
 
 C_DRW_corr <- tidyset %>% 
   filter(treatment == "Control") %>%
   filter(reactor == "DRW") %>% 
-  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, 
-           mean_NO2, mean_NO3, mean_PO4, mean_SO4, initial_p, P_change, pct_P_removal)) %>% 
-  select(!c(mean_NO2, mean_PO4)) # columns are all 0, remove to avoid issues with correlation analysis
+  select(c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4, initial_p, P_removal, pct_P_removal)) #%>% 
+  #select(!c(mean_NO2, mean_PO4)) # columns are all 0, remove to avoid issues with correlation analysis
 
 P_CNS_corr <- tidyset %>% 
   filter(treatment == "P") %>% 
   filter(reactor == "CNS") %>% 
-  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, 
-           mean_NO2, mean_NO3, mean_PO4, mean_SO4, initial_p, P_change, pct_P_removal))
+  select(c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4, initial_p, P_removal, pct_P_removal))
 
 P_DRW_corr <- tidyset %>% 
   filter(treatment == "P") %>% 
   filter(reactor == "DRW") %>% 
-  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, 
-           mean_NO2, mean_NO3, mean_PO4, mean_SO4, initial_p, P_change, pct_P_removal))
+  select(c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4, initial_p, P_removal, pct_P_removal))
 
 N_CNS_corr <- tidyset %>% 
   filter(treatment == "P+N") %>% 
   filter(reactor == "CNS") %>%
-  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, 
-           mean_NO2, mean_NO3, mean_PO4, mean_SO4, initial_p, P_change, pct_P_removal))
+  select(c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4, initial_p, P_removal, pct_P_removal))
 
 N_DRW_corr <- tidyset %>% 
   filter(treatment == "P+N") %>% 
   filter(reactor == "DRW") %>%
-  select(c(mean_Al, mean_Ca, mean_Fe, mean_Mg, mean_Mn, mean_P, mean_S, mean_Cl, 
-           mean_NO2, mean_NO3, mean_PO4, mean_SO4, initial_p, P_change, pct_P_removal))
+  select(c(Al, Ca, Fe, Mg, Mn, P, S, Cl, NO2, NO3, PO4, SO4, initial_p, P_removal, pct_P_removal))
 
 # Correlation plot for all elements/compounds (use spearman since it's nonparametric and does not have assumptions about distribution)
-pairs.panels(C_CNS_corr, method = "spearman", stars = TRUE)
-pairs.panels(C_DRW_corr, method = "spearman", stars = TRUE)
-pairs.panels(P_CNS_corr, method = "spearman", stars = TRUE)
-pairs.panels(P_DRW_corr, method = "spearman", stars = TRUE)
-pairs.panels(N_CNS_corr, method = "spearman", stars = TRUE)
-pairs.panels(N_DRW_corr, method = "spearman", stars = TRUE)
+pairs.panels(C_CNS_corr, method = "spearman", stars = TRUE) + mtext("Control - CNS", side = 3, line = 4)
+pairs.panels(C_DRW_corr, method = "spearman", stars = TRUE) + mtext("Control - DRW", side = 3, line = 4)
+pairs.panels(P_CNS_corr, method = "spearman", stars = TRUE) + mtext("P treatment - CNS", side = 3, line = 4)
+pairs.panels(P_DRW_corr, method = "spearman", stars = TRUE) + mtext("P treatment - DRW", side = 3, line = 4)
+pairs.panels(N_CNS_corr, method = "spearman", stars = TRUE) + mtext("P+N treatment - CNS", side = 3, line = 4)
+pairs.panels(N_DRW_corr, method = "spearman", stars = TRUE) + mtext("P+N treatment - DRW", side = 3, line = 4)
 
 # Run correlation individually:
 cor(P_correlation[,unlist(lapply(P_correlation, is.numeric))])

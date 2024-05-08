@@ -16,6 +16,7 @@ library(ggplot2)
 library(labdsv)
 library(ggrepel)
 library(vegan)
+library(glue)
 ```
 
 This is output of the MASH run on the day this R file was made. See the MASH notebook in the O2-legacy folder. 
@@ -74,7 +75,10 @@ positions_mash %>%
   geom_label_repel(aes(label = label), show.legend = FALSE, segment.color = NA) +
   scale_color_manual(values = c("darkorange", "deepskyblue2")) +
   theme_classic() +
-  labs(x = labs_mash[1], y = labs_mash[2], color = "Treatment")
+  labs(x = labs_mash[1], y = labs_mash[2], color = "Treatment") +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 12))
 ```
 
 ```{r}

@@ -49,19 +49,39 @@ icp_true_mean %>%
   ggplot() +
   geom_point(aes(x = mean_p_final, y = mean_p_adsorp)) +
   labs(y = "P adsorbed per unit mass (mg/g)", x = "Equilibrium concentration of P (mg/L)")
+
+
+# Box and whisker plot for p adsorption
+icp_truesamples$initial_p_treatment <- as.character(icp_truesamples$initial_p_treatment)
+
+icp_truesamples %>% 
+  ggplot(aes(x = initial_p_treatment, y = p_adsorp)) +
+  geom_boxplot()
+
+icp_truesamples %>% 
+  ggplot(aes(x = initial_p_treatment, y = aluminum)) +
+  geom_boxplot()
+
+icp_truesamples %>% 
+  ggplot(aes(x = initial_p_treatment, y = iron)) +
+  geom_boxplot()
 ```
 
 ## Isotherm modeling
 ```{r}
 Ce <- icp_true_mean$mean_p_final
 Qe <- icp_true_mean$mean_p_adsorp
+data <- data.frame(Ce, Qe)
 
 ## Following: https://cran.r-project.org/web/packages/PUPAIM/vignettes/PUPAIM.html
+
+# Adsorption plot
+plot(data, main = "Adsorption Data", xlab = "Ce", ylab = "Qe")
 
 # One-Parameter Adsorption Isotherm Model
 henryanalysis(Ce, Qe) #AIC = -22.25886
 ### the lowest number AIC is the best fit model for the data 
-### (lowest negative number in this case, not the lowest absolute value)
+### (most negative number in this case, not the lowest absolute value)
 
 
 

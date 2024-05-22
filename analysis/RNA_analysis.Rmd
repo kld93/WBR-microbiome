@@ -1,0 +1,95 @@
+---
+title: "RNA Analysis - Chapter 2 work"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+## Files needed:
+
+- 
+
+## Load packages & set directory
+```{r, include=FALSE}
+#install.packages("tidyverse")
+library(tidyverse)
+library(dada2)
+#packageVersion("dada2")
+
+pacman::p_load(phyloseq, patchwork, Biostrings, install = FALSE)
+```
+
+## set path to seq files
+```{r}
+# Set path to the gzipped files
+path <- "E:/RNA_kld"
+path
+
+# What files do we have?
+list.files(path)
+
+# Setting a variable with all the sample names by scanning our "samples.txt" file
+samples <- scan(file = "data/samples.txt", what = "character")
+samples
+```
+
+## Load forward and reverse reads
+```{r}
+# Create a variable for the forward and reverse reads
+
+#1. Forward read variable
+forward_reads <- sort(list.files("E:/RNA_kld", pattern = "_R1.fastq.gz", full.names = TRUE))
+forward_reads
+
+#2. Reverse read variable
+reverse_reads <- sort(list.files("E:/RNA_kld", pattern = "_R2.fastq.gz", full.names = TRUE))
+reverse_reads
+
+# Show the quality of each base on the reads of first 4 samples
+fwdQual4_plot <- plotQualityProfile(forward_reads[1:4])
+revQual4_plot <- plotQualityProfile(reverse_reads[1:4])
+
+#3. Place trimmed/filtered files into /trimmed_filtered/ subdirectory
+## Create a variable holding the files names for the forward and reverse reads
+filtered_fwd_reads <- file.path(path, "trimmed_filtered", paste0(samples, "_R1_trimmed_filtered.fastq"))
+filtered_fwd_reads
+
+filtered_rev_reads <- file.path(path, "trimmed_filtered", paste0(samples, "_R2_trimmed_filtered.fastq.gz"))
+filtered_rev_reads
+```
+
+#### Filter and trim for quality (trimLeft)
+```{r filter-trim}
+#FWD_adapter <- "AGATCGGAAGAGC"  # CHANGE ME to your forward primer sequence
+#REV_primer <- "GGACTACHVGGGTWTCTAAT"  # CHANGE ME to your reverse primer sequence
+FWD_primer_length <- 15 # CHANGE ME to your forward primer sequence length
+REV_primer_length <- 15 # CHANGE ME to your reverse primer sequence length
+
+# Trimming cut-offs were selected via visual inspection of the quality plots
+filtered_out <- filterAndTrim(fwd = forward_reads, 
+                              filt = filtered_fwd_reads, 
+                              rev = reverse_reads, 
+                              filt.rev = filtered_rev_reads,
+                              trimLeft = c(FWD_primer_length, REV_primer_length), 
+                              maxN = 0,
+                              multithread = FALSE)
+# maxN: every base counts with ASV, so we don't want any ambiguous sequences
+# Got error: "multithreading has been DISABLED, as forking is not supported on .Platform$OS.type 'windows'"
+## Set multithreading = FALSE on Windows (takes less time and R will disable it anyway)
+## Zymo Q&A states this is not a priority error so I left it alone
+
+# Plot the quality of trimmed reads
+filt_fwdQual4_plot <- plotQualityProfile(filtered_fwd_reads[1:4])
+filt_revQual4_plot <- plotQualityProfile(filtered_rev_reads[1:4])
+
+# Put the plots all together into one gigantic plot
+qual_plot_trimLeft <- (fwdQual4_plot_trimLeft + revQual4_plot_trimLeft) / (filt_fwdQual4_plot_trimLeft + filt_revQual4_plot_trimLeft)
+qual_plot_trimLeft
+
+## save plot
+ggsave(qual_plot_trimLeft,
+       filename = "figures/qual_plot_trimLeft.png",
+       units = "in", height = 5, width = 7)
+```
+

@@ -214,7 +214,7 @@ tmux
 ```
 
 
-## RNA-Seq analysis
+## RNA-Seq analysis (with Phil's data)
 
 #### Polyphosphate kinase (ppk)
 
@@ -277,3 +277,34 @@ chmod u+x daa.sh
 
 #move readVrefs.m8 to home so you can move via Filezilla to local computer
 ```
+
+
+## RNA-Seq analysis (my chapter 2 data)
+
+### trimming & cleaning
+```{bash}
+# moved RNA files from /home/RSCshare/share/6030D to /home/kld93/kbase/RNA_kld
+cp ./*fastq.gz /home/kld93/kbase/RNA_kld
+
+# installed Trim Galore following: https://github.com/FelixKrueger/TrimGalore
+# ran Trim Galore following: https://github.com/FelixKrueger/TrimGalore/blob/master/Docs/Trim_Galore_User_Guide.md
+# see help from word doc Ann Tate sent
+
+## keep files in .gz format
+trim_galore [options] <filename(s)>
+trim_galore -q 20 -O 1 -a AGATCGGAAGAGC --length 0 --fastqc *.fastq.gz
+
+# move files from new "1" folder to external hard drive via filezilla
+
+# use R to merge the forward and reverse reads
+
+# move files back to kld93 BioHPC drive
+
+# run diamond (below)
+```
+
+### DIAMOND
+```{r}
+
+```
+

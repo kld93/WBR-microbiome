@@ -34,6 +34,9 @@ list.files(path)
 # Setting a variable with all the sample names by scanning our "samples.txt" file
 samples <- scan(file = "data/samples.txt", what = "character")
 samples
+
+samples_18 <- c("6030_KD18-reseq")
+samples_18
 ```
 
 ## Load forward and reverse reads
@@ -44,9 +47,15 @@ samples
 forward_reads <- sort(list.files("E:/RNA_kld", pattern = "_R1.fastq.gz", full.names = TRUE))
 forward_reads
 
+forward_reads_18 <- sort(list.files("E:/RNA_kld/18", pattern = "_R1.fastq.gz", full.names = TRUE)) # 18 reseq
+forward_reads_18
+
 #2. Reverse read variable
 reverse_reads <- sort(list.files("E:/RNA_kld", pattern = "_R2.fastq.gz", full.names = TRUE))
 reverse_reads
+
+reverse_reads_18 <- sort(list.files("E:/RNA_kld/18", pattern = "_R2.fastq.gz", full.names = TRUE)) # 18 reseq
+reverse_reads_18
 
 # Show the quality of each base on the reads of first 4 samples
 fwdQual4_plot <- plotQualityProfile(forward_reads[1:4])
@@ -59,6 +68,9 @@ filtered_fwd_reads
 
 filtered_rev_reads <- file.path(path, "trimmed_filtered", paste0(samples, "_R2_trimmed_filtered.fastq.gz"))
 filtered_rev_reads
+
+filt_fwd_18 <- "E:/RNA_kld/trimmed_filtered/6030_KD18-reseq_R1_trimmed_filtered.fastq" # 18 reseq
+filt_rev_18 <- "E:/RNA_kld/trimmed_filtered/6030_KD18-reseq_R2_trimmed_filtered.fastq" # 18 reseq
 ```
 
 #### Filter and trim for quality (trimLeft)
@@ -76,10 +88,21 @@ filtered_out <- filterAndTrim(fwd = forward_reads,
                               trimLeft = c(FWD_primer_length, REV_primer_length), 
                               maxN = 0,
                               multithread = FALSE)
+
+filtered_out_18 <- filterAndTrim(fwd = forward_reads_18, 
+                              filt = basename(filt_fwd_18), 
+                              rev = reverse_reads_18, 
+                              filt.rev = basename(filt_rev_18),
+                              trimLeft = c(FWD_primer_length, REV_primer_length), 
+                              maxN = 0,
+                              multithread = FALSE)
 # maxN: every base counts with ASV, so we don't want any ambiguous sequences
 # Got error: "multithreading has been DISABLED, as forking is not supported on .Platform$OS.type 'windows'"
 ## Set multithreading = FALSE on Windows (takes less time and R will disable it anyway)
 ## Zymo Q&A states this is not a priority error so I left it alone
+
+# add the resequenced 18 to the rest
+filtered_full <- rbind(filtered_out, filtered_out_18)
 
 # Plot the quality of trimmed reads
 trimfilt_fwdQual4_plot <- plotQualityProfile(filtered_fwd_reads[1:4])
@@ -88,7 +111,7 @@ trimfilt_revQual4_plot <- plotQualityProfile(filtered_rev_reads[1:4])
 
 ### Percent Reads Lost (compare methods)
 ```{r}
-head(filtered_out)
+head(filtered_full)
 
 # Remove the file type from the sample row names to make the names match for joining
 for (row in 1:nrow(filtered_out)){
@@ -122,3 +145,11 @@ filtered_out_trimLeft %>%
   as_tibble() %>% 
   summary(reads.out)
 ```
+
+## Merge forward and reverse reads
+```{r}
+merged_amplicons <- mergePairs(dadaF = dada_fwd, derepF = filtered_fwd_reads_trimLeft, 
+                               dadaR = dada_rev, derepR = filtered_rev_reads_trimLeft, 
+                               verbose = TRUE)
+```
+

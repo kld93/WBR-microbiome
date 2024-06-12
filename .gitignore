@@ -8,3 +8,5 @@
 /data/*.kaijuReport
 /data/data_from_kbase
 /data/data_from_JPS
+*.fastq
+*.fastq.gz

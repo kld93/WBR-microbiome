@@ -281,30 +281,183 @@ chmod u+x daa.sh
 
 ## RNA-Seq analysis (my chapter 2 data)
 
-### trimming & cleaning
+#### Polyphosphate kinase (ppk)
+
 ```{bash}
-# moved RNA files from /home/RSCshare/share/6030D to /home/kld93/kbase/RNA_kld
-cp ./*fastq.gz /home/kld93/kbase/RNA_kld
+#use this directory
+cd kbase/forDIAMOND/forPPK
+cd kbase/forDIAMOND/forN
+cd kbase/forDIAMOND/forCAZY
 
-# installed Trim Galore following: https://github.com/FelixKrueger/TrimGalore
-# ran Trim Galore following: https://github.com/FelixKrueger/TrimGalore/blob/master/Docs/Trim_Galore_User_Guide.md
-# see help from word doc Ann Tate sent
+#make ".fa" database file machine readable
+/programs/diamond-0.9.24/diamond makedb --in ppk.fa -d ppk
 
-## keep files in .gz format
-trim_galore [options] <filename(s)>
-trim_galore -q 20 -O 1 -a AGATCGGAAGAGC --length 0 --fastqc *.fastq.gz
+#use text editor to create loop for diamond (save as "diamond.sh")
+##may need to change the file type, names, and "64" depending on which core machine you use
+nano
 
-# move files from new "1" folder to external hard drive via filezilla
+#copy the following code and paste into nano text editor:
+set -e
+set -u
+set -o pipefail
+array=($(ls ./*.fastq)) 
+echo ${array[@]}
+for file in ${array[@]};
+do
+    results="$(basename $file .fastq).out"
+    /programs/diamond-0.9.24/diamond blastx -d  ppk.dmnd -q ${file} -p 64 -e 1e-3 -k 1 -a ./$results
+done;
+##type ctrlX to exit, Y for yes to save, name "diamond.sh"
 
-# use R to merge the forward and reverse reads
+#if you need to edit script:
+##just run nano again, make changes in R and re-paste into nano, then save/overwrite (this way you won't have to make it executable again, it already is)
 
-# move files back to kld93 BioHPC drive
+#to make the diamond.sh file executable
+chmod u+x diamond.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
 
-# run diamond (below)
+## run in tmux
+tmux
+tmux a -t 0 #to open the terminal later (ctrl+b,d to return to main screen)
+
+#to run it:
+./diamond.sh
+
+#use text editor to create daa file
+nano #to make a new one
+
+for f in ./*.daa; do \
+    /programs/diamond-0.9.24/diamond view -a $f | awk -v fn="$f" -F"\t" 'BEGIN {OFS = FS} {print $0, fn}';  
+done > readVrefs.m8
+##save it as daa.sh
+
+#make it executable
+chmod u+x daa.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+#to run it:
+./daa.sh
+
+#move readVrefs.m8 to home so you can move via Filezilla to local computer
 ```
 
-### DIAMOND
-```{r}
+#### Denitrifying (N) genes
 
+```{bash}
+#use this directory (started in 'kld93@cbsumm10)
+cd kbase #all the sample zip files from kbase are here (moved via Filezilla)
+
+#no need to unzip or move sample files to kbase folder (already there from last time)
+
+#change name of .fa file
+mv allNcycle_seqs_nartat_fix.txt Ncycle.fa
+
+#make Ncycle.fa database file machine readable
+/programs/diamond-0.9.24/diamond makedb --in Ncycle.fa -d Ncycle
+
+#use text editor to create loop for diamond (save as "diamond.sh")
+##may need to change the file type, names, and "64" depending on which core machine you use
+nano
+
+#copy the following code and paste into nano text editor:
+set -e
+set -u
+set -o pipefail
+array=($(ls ./*.fastq)) 
+echo ${array[@]}
+for file in ${array[@]};
+do
+    results="$(basename $file .fastq).out"
+    /programs/diamond-0.9.24/diamond blastx -d  Ncycle.dmnd -q ${file} -p 64 -e 1e-3 -k 1 -a ./$results
+done;
+##type ctrlX to exit, Y for yes to save, name "diamond.sh"
+
+#if you need to edit script:
+##just run nano again, make changes in R and re-paste into nano, then save/overwrite (this way you won't have to make it executable again, it already is)
+
+#to make the diamond.sh file executable
+chmod u+x diamond.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+## run in tmux
+tmux
+tmux a -t 0 #to open the terminal later (ctrl+b,d to return to main screen)
+
+#to run it:
+./diamond.sh
+
+#use text editor to create daa file
+nano #to make a new one
+
+for f in ./*.daa; do \
+    /programs/diamond-0.9.24/diamond view -a $f | awk -v fn="$f" -F"\t" 'BEGIN {OFS = FS} {print $0, fn}';  
+done > readVrefs.m8
+##save it as daa.sh
+
+#make it executable
+chmod u+x daa.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+#to run it:
+tmux
+./daa.sh
+
+#move readVrefs.m8 to home so you can move via Filezilla to local computer
+```
+
+#### Carbohydrate-Active enZymes (CAZy) (ran on 11/8/2022)
+
+```{bash}
+#make CAZy.fa database file machine readable
+/programs/diamond-0.9.24/diamond makedb --in CAZy.fa -d CAZy
+
+#use text editor to create loop for diamond (save as "diamond.sh")
+##may need to change the file type, names, and "64" depending on which core machine you use
+nano
+
+#copy the following code and paste into nano text editor:
+set -e
+set -u
+set -o pipefail
+array=($(ls ./*.fastq)) 
+echo ${array[@]}
+for file in ${array[@]};
+do
+    results="$(basename $file .fastq).out"
+    /programs/diamond-0.9.24/diamond blastx -d  CAZy.dmnd -q ${file} -p 64 -e 1e-3 -k 1 -a ./$results
+done;
+##type ctrlX to exit, Y for yes to save, name "diamond.sh"
+
+#if you need to edit script:
+##just run nano again, make changes in R and re-paste into nano, then save/overwrite (this way you won't have to make it executable again, it already is)
+
+#to make the diamond.sh file executable
+chmod u+x diamond.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+## run in tmux
+tmux
+tmux a -t 0 #to open the terminal later (ctrl+b,d to return to main screen)
+
+#to run it:
+./diamond.sh
+
+#use text editor to create daa file
+nano #to make a new one
+
+for f in ./*.daa; do \
+    /programs/diamond-0.9.24/diamond view -a $f | awk -v fn="$f" -F"\t" 'BEGIN {OFS = FS} {print $0, fn}';  
+done > readVrefs.m8
+##save it as daa.sh
+
+#make it executable
+chmod u+x daa.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+#to run it:
+tmux
+./daa.sh
+
+#move readVrefs.m8 to home so you can move via Filezilla to local computer
 ```
 

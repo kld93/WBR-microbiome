@@ -20,7 +20,7 @@ library(tidyverse)
 ## Load data
 ```{r}
 # count data (from DIAMOND)
-dmnd_out_ppk <- read_csv("data/RNA_readVrefs_ppk.csv", 
+dmnd_out_ppk <- read_csv("data/Phil_readVrefs_ppk.csv", 
                   col_types = "ccdiiiiiiiddc", 
                   col_names = c("query", 
                                 "subject", 
@@ -50,7 +50,7 @@ dmnd_out_ppk <- dmnd_out_ppk %>%
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-read_count_ppk = read.csv("C:/Users/Katie/Documents/WBR-microbiome/data/sampleinfo_RNA.csv")
+read_count_ppk = read.csv("C:/Users/Katie/Documents/WBR-microbiome/data/Phil_sampleinfo.csv")
 ```
 
 ### Join the two dataframes together

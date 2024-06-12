@@ -1,0 +1,249 @@
+---
+title: "Chap 2 - Polyphosphate kinase (ppk) Differential Expression"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+## Files needed:
+
+- "RNA_readVrefs_ppkTODAY.csv" (output from DIAMOND - copied readVrefs file into csv)
+- "readVrefs_CAZy_TODAY.m8" (output from DIAMOND - too large to copy into a csv)
+- "RNA_readVrefs_NcycleTODAY.csv" (output from DIAMOND - copied readVrefs file into csv)
+- "sampleinfo_RNA.csv" (metadata about each sample)
+
+## Load packages & set directory
+```{r, include=FALSE}
+#install.packages("tidyverse")
+library(tidyverse)
+```
+
+## Load data
+```{r}
+# count data (from DIAMOND)
+## ppk
+dmnd_out_ppk <- read_csv("data/RNA/chap2_readVrefs_ppk.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend,", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+## N cycle
+dmnd_out_Ncycle = read_csv("data/RNA/chap2_readVrefs_Ncycle.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+## CAZy
+dmnd_out_CAZy <- read_delim(file = "data/RNA/readVrefs_CAZy.m8")
+
+dmnd_out_CAZy <- dmnd_out_CAZy %>% 
+  mutate(source = gsub("\\|.*", "", subject),
+         temp = gsub("^[^\\|]+\\||-.*", "", subject),
+         classI = gsub("\\|.*", "", temp),
+         classII = sub(".*\\|", "", temp))
+
+# temp
+unique(dmnd_out_ppk$fn)
+unique(dmnd_out_Ncycle$fn)
+
+dmnd_out_ppk <- dmnd_out_ppk %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "139_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "140_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "141_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "142_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "147_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "148_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "149_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "150_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "39_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "40_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "41_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "42_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "47_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "48_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "49_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "50_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "89_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "90_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "91_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "92_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "97_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
+
+dmnd_out_Ncycle <- dmnd_out_Ncycle %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "139_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "140_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "141_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "142_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "147_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "148_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "149_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "150_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "39_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "40_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "41_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "42_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "47_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "48_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "49_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "50_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "89_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "90_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "91_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "92_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "97_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
+```
+
+### Read in the metadata (i.e., read counts)
+```{r}
+read_count = read.csv("data/RNA/chap2_sampleinfo_RNA.csv")
+```
+
+### Join the two dataframes together
+```{r}
+dmnd_ppk <-  dmnd_out_ppk %>%
+    group_by(fn) %>%
+    summarize(raw.count = n()) %>% #sums up the rows for each sample
+    left_join(read_count) %>%
+    mutate(norm.count = (raw.count/count) * 1000000) %>% 
+    mutate(gene = "ppk") # Add column with gene name (to make plot look the same as N and CAZy plots)
+
+dmnd_Ncycle <-  dmnd_out_Ncycle %>%
+    group_by(fn) %>%
+    summarize(raw.count = n()) %>% #sums up the rows for each sample
+    left_join(read_count) %>%
+    mutate(norm.count = (raw.count/count) * 1000000)
+```
+
+### Create the dot chart
+```{r}
+dmnd_ppk %>% 
+  ggplot(aes(fn, norm.count)) +
+  geom_point() +
+  facet_grid(~gene)+ 
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill="gold"), 
+        panel.grid.major.y = element_line(linetype=3, color="dark grey"), 
+        legend.position ="none", 
+        axis.text.y = element_text(size = 10), 
+        axis.text.x = element_text(angle = 90)) +
+  labs(x = "Sample", y = "Reads per million total reads")
+```
+
+### different plot
+```{r}
+dmnd_ppk %>% 
+  ggplot(aes(x = hours_after_start, y = norm.count, color = condition)) +
+  geom_line() +
+  labs(x = "Time from start (hours)", y = "Reads per million mapped to ppk", color = "Bioreactor\nCondition")
+```
+
+
+## DESeq
+
+### Prepare count data
+```{r}
+library(DESeq2)
+
+#counts data
+cts <- dmnd_out_ppk %>%
+  group_by(fn) %>%
+  summarize(raw.count = n()) %>%
+  pivot_wider(names_from = fn, values_from = raw.count) %>% 
+  data.frame
+
+ppk <- "ppk"
+
+rownames(cts) <- ppk
+
+counts_data <- cts #%>% 
+  #select(!c(hf_cs_p2_t0_h0_prok, hf_cs_p2_t10_h100_prok))
+
+#sample info
+sampleinfo <- read_count_ppk %>% 
+  select(!c(port, timepoint)) %>% 
+  data.frame
+
+rownames(sampleinfo) <- sampleinfo$fn
+
+coldata <- sampleinfo %>% 
+  select(!fn) #%>% 
+  #filter(condition == "drw")
+```
+
+### check data
+```{r}
+# make sure the row names in coldata match the column names in counts_data
+all(colnames(counts_data) %in% rownames(coldata))
+
+# make sure they are also in the same order
+all(colnames(counts_data) == rownames(coldata))
+```
+
+### construct a DESeqDataSet object
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts_data,
+                              colData = coldata,
+                              design = ~ condition)
+
+dds
+```
+
+### set the factor level
+```{r}
+#dds$hours_cat <- relevel(dds$hours_cat, ref = "A")
+
+dds$condition <- relevel(dds$condition, ref = "cs")
+```
+
+### Run DESeq2
+```{r}
+#dds <- DESeq(dds)
+dds <- estimateSizeFactors(dds)
+dds <- estimateDispersionsGeneEst(dds)
+dispersions(dds) <- mcols(dds)$dispGeneEst
+
+
+
+res <- results(dds)
+```
+
+
+### Explore results
+```{r}
+res
+```
+

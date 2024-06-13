@@ -405,7 +405,7 @@ tmux
 #move readVrefs.m8 to home so you can move via Filezilla to local computer
 ```
 
-#### Carbohydrate-Active enZymes (CAZy) (ran on 11/8/2022)
+#### Carbohydrate-Active enZymes (CAZy)
 
 ```{bash}
 #make CAZy.fa database file machine readable

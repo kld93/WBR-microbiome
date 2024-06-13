@@ -60,13 +60,14 @@ annotation_map = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/annotati
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-read_count_N = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata_N.csv")
+read_count_N = read_csv("C:/Users/Katie/Documents/WBR-microbiome/data/Woodchip_metadata.csv") %>% 
+  rename(fn = filename)
 ```
 
 ### Join the three dataframes together
 ```{r}
 dmnd_N = dmnd_out_Ncycle_correct %>%
-    left_join(annotation_map, relationship = "many-to-many") %>%
+    left_join(annotation_map, join_by(subject), relationship = "many-to-many") %>%
     group_by(fn, gene) %>%
     summarize(raw.count = n()) %>%
     left_join(., read_count_N, by = "fn") %>%
@@ -324,9 +325,9 @@ d3_N_avg
 
 d3_N_ppk <- rbind(d3_N_avg, d3_ppk_avg)
 
-d3_N_ppk$rename = c("Nap", "Nap", "Nar", "Nar", "NirK", "NirK", "NirS", "NirS", "NosZ", "NosZ", "cNor", "cNor", "qNor", "qNor", "ppk*", "ppk*")
+d3_N_ppk$rename = c("Nap", "Nap", "Nar", "Nar", "NirK*", "NirK*", "NirS", "NirS", "NosZ", "NosZ", "cNor*", "cNor*", "qNor", "qNor", "ppk*", "ppk*")
 
-d3_N_ppk$ord = factor(d3_N_ppk$rename, levels=c("Nap","Nar","NirK","NirS","cNor","qNor","NosZ", "ppk*"))
+d3_N_ppk$ord = factor(d3_N_ppk$rename, levels=c("Nap","Nar","NirK*","NirS","cNor*","qNor","NosZ", "ppk*"))
 ```
 
 ### Create COMBINED dot chart

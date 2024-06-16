@@ -23,7 +23,7 @@ library(tidyverse)
 ```{r}
 # count data (from DIAMOND)
 ## ppk
-dmnd_out_ppk <- read_csv("data/RNA/chap2_readVrefs_ppk.csv", 
+dmnd_out_ppk <- read_csv("data/RNA/chap2_readVrefs_ppk2.csv", 
                   col_types = "ccdiiiiiiiddc", 
                   col_names = c("query", 
                                 "subject", 
@@ -41,7 +41,7 @@ dmnd_out_ppk <- read_csv("data/RNA/chap2_readVrefs_ppk.csv",
     filter(pid >= 60, aln_len > 25)
 
 ## N cycle
-dmnd_out_Ncycle = read_csv("data/RNA/chap2_readVrefs_Ncycle.csv", 
+dmnd_out_Ncycle = read_csv("C:/github/WBR-microbiome/data/RNA/chap2_readVrefs_Ncycle.csv", 
                   col_types = "ccdiiiiiiiddc", 
                   col_names = c("query", 
                                 "subject", 
@@ -61,6 +61,9 @@ dmnd_out_Ncycle = read_csv("data/RNA/chap2_readVrefs_Ncycle.csv",
 ## CAZy
 dmnd_out_CAZy <- read_delim(file = "data/RNA/readVrefs_CAZy.m8")
 
+colnames(dmnd_out_CAZy) <- c("query", "subject", "pid", "aln_len", "mismatches", "gaps", 
+                             "qstart", "qend", "sstart", "send", "e-value", "bit", "fn")
+
 dmnd_out_CAZy <- dmnd_out_CAZy %>% 
   mutate(source = gsub("\\|.*", "", subject),
          temp = gsub("^[^\\|]+\\||-.*", "", subject),
@@ -70,6 +73,7 @@ dmnd_out_CAZy <- dmnd_out_CAZy %>%
 # temp
 unique(dmnd_out_ppk$fn)
 unique(dmnd_out_Ncycle$fn)
+unique(dmnd_out_CAZy$fn)
 
 dmnd_out_ppk <- dmnd_out_ppk %>% 
   mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
@@ -124,52 +128,168 @@ dmnd_out_Ncycle <- dmnd_out_Ncycle %>%
   mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
   mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
   mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
+
+dmnd_out_CAZy <- dmnd_out_CAZy %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "139_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "140_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "141_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "142_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "147_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "148_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "149_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "150_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "39_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "40_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "41_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "42_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "47_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "48_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "49_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "50_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "89_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "90_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "91_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "92_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "97_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
 ```
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-read_count = read.csv("data/RNA/chap2_sampleinfo_RNA.csv")
+read_count = read.csv("data/RNA/chap2_woodchip_metadata.csv")
+```
+
+### Read in the annotation map for denitrifying genes
+```{r}
+annotation_map = read_csv("data/annotation_map.csv", col_types = "cc", col_names = c("gene","subject"))
 ```
 
 ### Join the two dataframes together
 ```{r}
+dmnd_N = dmnd_out_Ncycle %>%
+    left_join(annotation_map, join_by(subject), multiple = "all") %>%
+    group_by(fn, gene) %>%
+    summarize(raw.count = n()) %>% # calculate mapped read count
+    left_join(., read_count, by = "fn") %>%
+    mutate(norm.count = (raw.count / count) * 1000000) %>% # normalize the mapped read counts
+    filter(!fn == "blank_trim_cut")
+
 dmnd_ppk <-  dmnd_out_ppk %>%
     group_by(fn) %>%
     summarize(raw.count = n()) %>% #sums up the rows for each sample
     left_join(read_count) %>%
     mutate(norm.count = (raw.count/count) * 1000000) %>% 
-    mutate(gene = "ppk") # Add column with gene name (to make plot look the same as N and CAZy plots)
+    mutate(gene = "ppk") %>% # Add column with gene name (one gene so annoation map not needed)
+    filter(!fn == "blank_trim_cut")
 
-dmnd_Ncycle <-  dmnd_out_Ncycle %>%
-    group_by(fn) %>%
-    summarize(raw.count = n()) %>% #sums up the rows for each sample
+dmnd_CAZy <- dmnd_out_CAZy %>%
+  left_join(read_count) %>%
+  select(query, fn, count, classI)
+
+dmnd_AAfilter <- dmnd_CAZy %>% 
+  filter(classI == "AA0" | classI == "AA1" | classI == "AA1_1" | classI == "AA1_2" | classI == "AA1_3" | classI == "AA2" | classI == "AA3" | classI == "AA3_1" | classI == "AA3_2" | classI == "AA3_3" | classI == "AA4" | classI == "AA5" | classI == "AA5_1" | classI == "AA5_2" | classI == "AA6" | classI == "AA7" | classI == "AA8" | classI == "AA9" | classI == "AA10" | classI == "AA11" | classI == "AA12" | classI == "AA13" | classI == "AA14" | classI == "AA15" | classI == "AA16" | classI == "AA17")
+
+d2_CAZy <- dmnd_AAfilter %>%
+    group_by(fn, classI) %>%
+    summarize(raw.count = n()) %>% #gives number of queries in each sample were mapped to the given gene
     left_join(read_count) %>%
-    mutate(norm.count = (raw.count/count) * 1000000)
+    mutate(norm.count = (raw.count / count) * 1000000) #gives reads per million total reads
 ```
 
-### Create the dot chart
+### Add gene names for N cycle
 ```{r}
-dmnd_ppk %>% 
-  ggplot(aes(fn, norm.count)) +
+d2_N = dmnd_N[dmnd_N$gene %in% c("Nap", "Nar", "NirK", "NirS", "cNorB", "qNorZ", "NosZ"), ] 
+#filters out any rows that are not these 7 genes
+```
+
+### Group by treatment, reactor, and timepoint & calculate plot stats
+```{r}
+## N cycle
+d3_N = dplyr::group_by(d2_N, gene, Treatment, Reactor, Timepoint)
+
+#d3_N_avg = dplyr::summarize(d3_N, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_N_avg = dplyr::summarize(d3_N, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
+
+## ppk
+d3_ppk = dplyr::group_by(dmnd_ppk, gene, Treatment, Reactor, Timepoint)
+
+#d3_ppk_avg = dplyr::summarize(d3_ppk, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_ppk_avg = dplyr::summarize(d3_ppk, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
+
+## CAZy
+d3_CAZy = dplyr::group_by(d2_CAZy, classI, Treatment, Reactor, Timepoint)
+
+#d3_CAZy_avg = dplyr::summarize(d3_CAZy, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_CAZy_avg = dplyr::summarize(d3_CAZy, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
+```
+
+### Add a new column to CAZy set with corrected names
+```{r}
+d3_CAZy_avg$rename = c("AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA11", "AA11", "AA11", "AA11", "AA11", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA14", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA16", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3.1", "AA3.1", "AA3.1", "AA3.1", "AA3.1", "AA3.1", "AA3.1", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5.1", "AA5", "AA5.1", "AA5", "AA5.1", "AA5", "AA5.1", "AA5", "AA5", "AA5.1", "AA5.1", "AA5.2", "AA5.2", "AA5.2", "AA5.2", "AA5.2", "AA5.2", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA7", "AA7", "AA7", "AA7", "AA7", "AA7", "AA7", "AA7", "AA8", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9")
+
+#adds a column of these values, in this order (FYI - use d3_CAZy_avg to help make this list in the correct order)
+```
+
+### Bind the ppk and N-cycle data together and rename/reorder genes
+```{r}
+d3_ppk_avg
+d3_N_avg
+
+d3_N_ppk <- rbind(d3_N_avg, d3_ppk_avg)
+
+d3_N_ppk$rename = c("Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "cNor", "cNor", "cNor", "cNor", "cNor", "cNor", "cNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk")
+
+d3_N_ppk$ord = factor(d3_N_ppk$rename, levels=c("Nap","Nar","NirK","NirS","cNor","qNor","NosZ", "ppk"))
+
+d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0", "AA1", "AA1.1", "AA1.2", "AA1.3", "AA2", "AA3", "AA3.1", "AA3.2", "AA3.3", "AA4", "AA5", "AA5.1", "AA5.2", "AA6", "AA7", "AA8", "AA9", "AA10", "AA11", "AA12", "AA13", "AA14", "AA15", "AA16", "AA17"))
+```
+
+### Create the dot charts
+```{r}
+# N cycle and ppk together
+d3_N_ppk %>% 
+  ggplot(aes(median, Reactor, color = Timepoint)) +
   geom_point() +
-  facet_grid(~gene)+ 
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(ord ~ Treatment) +
+  scale_color_manual(values = c("red3", "deepskyblue3")) +
   theme(panel.background = element_rect(fill = "white"), 
         panel.grid.major.x = element_blank(), 
-        strip.background = element_rect(fill="gold"), 
-        panel.grid.major.y = element_line(linetype=3, color="dark grey"), 
-        legend.position ="none", 
-        axis.text.y = element_text(size = 10), 
-        axis.text.x = element_text(angle = 90)) +
-  labs(x = "Sample", y = "Reads per million total reads")
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="bottom", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Reads per million total reads", y = "Hours post DRW reactor re-flood")
+
+# CAZY
+d3_CAZy_avg %>% 
+  ggplot(aes(median, Reactor, color = Timepoint)) +
+  geom_point() +
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(ord ~ Treatment) +
+  scale_color_manual(values = c("red3", "deepskyblue3")) +
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="bottom", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Reads per million total reads", y = "Hours post DRW reactor re-flood")
 ```
 
-### different plot
-```{r}
-dmnd_ppk %>% 
-  ggplot(aes(x = hours_after_start, y = norm.count, color = condition)) +
-  geom_line() +
-  labs(x = "Time from start (hours)", y = "Reads per million mapped to ppk", color = "Bioreactor\nCondition")
-```
+
+
+
+
+############# DESEQ??????????
 
 
 ## DESeq

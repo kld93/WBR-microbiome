@@ -21,7 +21,7 @@ library(psych)
 
 ## Load data
 ```{r}
-icp_ic_results <- read_csv("C:/github/WBR-microbiome/data/GFBR_icp_ic_results.csv") %>% 
+icp_ic_results <- read_csv("data/GFBR_icp_ic_results.csv") %>% 
   unite(datetime, c(date, time), sep = " ", remove = FALSE) #combine date and time
 ```
 
@@ -177,6 +177,8 @@ tidyset <- rbind(mean_controlrun, mean_Prun, mean_NPrun) %>%
   mutate(decreaseP = ifelse(initial_p > P, TRUE, FALSE)) %>% 
   mutate(P_removal = initial_p - P) %>%
   mutate(pct_P_removal = ((initial_p - P)/initial_p) * 100)
+
+write.csv(tidyset, file = "data/RNA/nutrient_conc.csv")
 
 breaks <- tidyset %>%
   pull(hours_after_start) %>% 

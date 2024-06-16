@@ -285,6 +285,50 @@ d3_CAZy_avg %>%
   labs(x = "Reads per million total reads", y = "Hours post DRW reactor re-flood")
 ```
 
+### Create similar plot for nutrient concentrations
+```{r}
+icp_ic_results <- read_csv("data/GFBR_icp_ic_results.csv") %>% 
+  unite(datetime, c(date, time), sep = " ", remove = FALSE) #combine date and time
+
+RNA_nutrient_conc <- icp_ic_results %>% 
+  filter(cycle == 2) %>% 
+  filter(sample_timepoint == 24 | sample_timepoint == 120)
+
+conc_plot <- RNA_nutrient_conc %>%
+  select(!c(ICP_IC_batch, cycle, hours_after_start, replicate, ICP_sample, 
+            IC_sample, RNA_sample, datetime, date, time)) %>% 
+  pivot_longer(cols = c("initial_p", "initial_no3", "Al", "Ca", "Fe", 
+                        "Mg", "Mn", "P", "S", "Cl", "NO2", "NO3", "PO4", 
+                        "SO4"), names_to = "nutrient", values_to = "concentration") %>% 
+  group_by(nutrient, treatment, reactor, sample_timepoint) %>% 
+  summarize(median = median(concentration), 
+            upper_lim = max(concentration), 
+            lower_lim = min(concentration))
+
+conc_plot$sample_timepoint <- as.character(conc_plot$sample_timepoint)
+
+conc_plot %>% 
+  filter(!nutrient == "initial_p") %>% 
+  filter(!nutrient == "initial_no3") %>%
+  filter(!nutrient == "Ca") %>%
+  filter(!nutrient == "Cl") %>%
+  filter(!nutrient == "Mg") %>% 
+  ggplot(aes(median, reactor, color = sample_timepoint)) +
+  geom_point() +
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(nutrient ~ treatment) +
+  scale_color_manual(values = c("red3", "deepskyblue3")) +
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="bottom", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Concentration (mg/L)", y = "Hours post DRW reactor re-flood")
+
+RNA_nutrientconc_full
+```
 
 
 

@@ -308,11 +308,15 @@ conc_plot <- RNA_nutrient_conc %>%
 conc_plot$sample_timepoint <- as.character(conc_plot$sample_timepoint)
 
 conc_plot %>% 
-  filter(!nutrient == "initial_p") %>% 
+  filter(!nutrient == "initial_p") %>% # turn these off/on depending one what needs to be shown
   filter(!nutrient == "initial_no3") %>%
   filter(!nutrient == "Ca") %>%
   filter(!nutrient == "Cl") %>%
   filter(!nutrient == "Mg") %>% 
+  filter(!nutrient == "Fe") %>%
+  filter(!nutrient == "NO3") %>%
+  filter(!nutrient == "S") %>%
+  filter(!nutrient == "SO4") %>%
   ggplot(aes(median, reactor, color = sample_timepoint)) +
   geom_point() +
   #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
@@ -326,8 +330,6 @@ conc_plot %>%
         legend.position ="bottom", 
         axis.text.y = element_text(size = 10)) +
   labs(x = "Concentration (mg/L)", y = "Hours post DRW reactor re-flood")
-
-RNA_nutrientconc_full
 ```
 
 

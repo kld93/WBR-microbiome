@@ -1,0 +1,1083 @@
+---
+title: "Chap 2 - Polyphosphate kinase (ppk) Differential Expression"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+## Files needed:
+
+- "RNA_readVrefs_ppkTODAY.csv" (output from DIAMOND - copied readVrefs file into csv)
+- "readVrefs_CAZy_TODAY.m8" (output from DIAMOND - too large to copy into a csv)
+- "RNA_readVrefs_NcycleTODAY.csv" (output from DIAMOND - copied readVrefs file into csv)
+- "sampleinfo_RNA.csv" (metadata about each sample)
+
+## Load packages & set directory
+```{r, include=FALSE}
+#install.packages("tidyverse")
+library(tidyverse)
+library(pals)
+```
+
+## Load data
+```{r}
+# count data (from DIAMOND)
+## ppk
+dmnd_out_ppk <- read_csv("data/RNA/chap2_readVrefs_ppk2.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend,", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+## N cycle
+dmnd_out_Ncycle = read_csv("C:/github/WBR-microbiome/data/RNA/chap2_readVrefs_Ncycle.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+## CAZy
+dmnd_out_CAZy <- read_delim(file = "data/RNA/readVrefs_CAZy.m8")
+
+colnames(dmnd_out_CAZy) <- c("query", "subject", "pid", "aln_len", "mismatches", "gaps", 
+                             "qstart", "qend", "sstart", "send", "e-value", "bit", "fn")
+
+dmnd_out_CAZy <- dmnd_out_CAZy %>% 
+  mutate(source = gsub("\\|.*", "", subject),
+         temp = gsub("^[^\\|]+\\||-.*", "", subject),
+         classI = gsub("\\|.*", "", temp),
+         classII = sub(".*\\|", "", temp))
+
+dmnd_out_ppk <- dmnd_out_ppk %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "139_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "140_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "141_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "142_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "147_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "148_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "149_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "150_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "39_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "40_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "41_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "42_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "47_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "48_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "49_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "50_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "89_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "90_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "91_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "92_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "97_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
+
+dmnd_out_Ncycle <- dmnd_out_Ncycle %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "139_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "140_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "141_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "142_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "147_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "148_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "149_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "150_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "39_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "40_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "41_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "42_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "47_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "48_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "49_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "50_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "89_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "90_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "91_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "92_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "97_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
+
+dmnd_out_CAZy <- dmnd_out_CAZy %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "139_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "140_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "141_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "142_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "147_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "148_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "149_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "150_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "39_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "40_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "41_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "42_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "47_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "48_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "49_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "50_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "89_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "90_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "91_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "92_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "97_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
+```
+
+### Read in the metadata (i.e., read counts)
+```{r}
+read_count = read.csv("data/RNA/chap2_woodchip_metadata.csv")
+```
+
+### Read in the annotation map for denitrifying genes
+```{r}
+annotation_map = read_csv("data/annotation_map.csv", col_types = "cc", col_names = c("gene","subject"))
+```
+
+### Join the two dataframes together
+```{r}
+dmnd_N = dmnd_out_Ncycle %>%
+    left_join(annotation_map, join_by(subject), multiple = "all") %>%
+    group_by(fn, gene) %>%
+    summarize(raw.count = n()) %>% # calculate mapped read count
+    left_join(., read_count, by = "fn") %>%
+    mutate(norm.count = (raw.count / count) * 1000000) %>% # normalize the mapped read counts
+    filter(!fn == "blank_trim_cut")
+
+dmnd_ppk <-  dmnd_out_ppk %>%
+    group_by(fn) %>%
+    summarize(raw.count = n()) %>% #sums up the rows for each sample
+    left_join(read_count) %>%
+    mutate(norm.count = (raw.count/count) * 1000000) %>% 
+    mutate(gene = "ppk") %>% # Add column with gene name (one gene so annoation map not needed)
+    filter(!fn == "blank_trim_cut")
+
+dmnd_CAZy <- dmnd_out_CAZy %>%
+  left_join(read_count) %>%
+  select(query, fn, count, classI)
+
+dmnd_AAfilter <- dmnd_CAZy %>% 
+  filter(classI == "AA0" | classI == "AA1" | classI == "AA1_1" | classI == "AA1_2" | classI == "AA1_3" | classI == "AA2" | classI == "AA3" | classI == "AA3_1" | classI == "AA3_2" | classI == "AA3_3" | classI == "AA4" | classI == "AA5" | classI == "AA5_1" | classI == "AA5_2" | classI == "AA6" | classI == "AA7" | classI == "AA8" | classI == "AA9" | classI == "AA10" | classI == "AA11" | classI == "AA12" | classI == "AA13" | classI == "AA14" | classI == "AA15" | classI == "AA16" | classI == "AA17")
+
+d2_CAZy <- dmnd_AAfilter %>%
+    group_by(fn, classI) %>%
+    summarize(raw.count = n()) %>% #gives number of queries in each sample were mapped to the given gene
+    left_join(read_count) %>%
+    mutate(norm.count = (raw.count / count) * 1000000) #gives reads per million total reads
+```
+
+### Add gene names for N cycle
+```{r}
+d2_N = dmnd_N[dmnd_N$gene %in% c("Nap", "Nar", "NirK", "NirS", "cNorB", "qNorZ", "NosZ"), ] 
+#filters out any rows that are not these 7 genes
+```
+
+### Group by treatment, reactor, and timepoint & calculate plot stats
+```{r}
+## N cycle
+d3_N = dplyr::group_by(d2_N, gene, Treatment, Reactor, Timepoint)
+
+#d3_N_avg = dplyr::summarize(d3_N, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_N_avg = dplyr::summarize(d3_N, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
+
+## ppk
+d3_ppk = dplyr::group_by(dmnd_ppk, gene, Treatment, Reactor, Timepoint)
+
+#d3_ppk_avg = dplyr::summarize(d3_ppk, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_ppk_avg = dplyr::summarize(d3_ppk, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
+
+## CAZy
+d3_CAZy = dplyr::group_by(d2_CAZy, classI, Treatment, Reactor, Timepoint)
+
+#d3_CAZy_avg = dplyr::summarize(d3_CAZy, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_CAZy_avg = dplyr::summarize(d3_CAZy, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
+```
+
+### Add a new column to CAZy set with corrected names
+```{r}
+d3_CAZy_avg$rename = c("AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA1", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA10", "AA11", "AA11", "AA11", "AA11", "AA11", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA12", "AA14", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA15", "AA16", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA17", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.1", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.2", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA1.3", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA2", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3", "AA3.1", "AA3.1", "AA3.1", "AA3.1", "AA3.1", "AA3.1", "AA3.1", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.2", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA3.3", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA4", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5", "AA5.1", "AA5", "AA5.1", "AA5", "AA5.1", "AA5", "AA5.1", "AA5", "AA5", "AA5.1", "AA5.1", "AA5.2", "AA5.2", "AA5.2", "AA5.2", "AA5.2", "AA5.2", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA6", "AA7", "AA7", "AA7", "AA7", "AA7", "AA7", "AA7", "AA7", "AA8", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9", "AA9")
+
+#adds a column of these values, in this order (FYI - use d3_CAZy_avg to help make this list in the correct order)
+```
+
+### Bind the ppk and N-cycle data together and rename/reorder genes
+```{r}
+d3_ppk_avg
+d3_N_avg
+
+d3_N_ppk <- rbind(d3_N_avg, d3_ppk_avg)
+
+d3_N_ppk$rename = c("Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "cNor", "cNor", "cNor", "cNor", "cNor", "cNor", "cNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk")
+
+d3_N_ppk$ord = factor(d3_N_ppk$rename, levels=c("Nap","Nar","NirK","NirS","cNor","qNor","NosZ", "ppk"))
+
+d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0", "AA1", "AA1.1", "AA1.2", "AA1.3", "AA2", "AA3", "AA3.1", "AA3.2", "AA3.3", "AA4", "AA5", "AA5.1", "AA5.2", "AA6", "AA7", "AA8", "AA9", "AA10", "AA11", "AA12", "AA13", "AA14", "AA15", "AA16", "AA17"))
+```
+
+### Create the dot charts
+```{r}
+# N cycle and ppk together
+d3_N_ppk %>% 
+  ggplot(aes(median, Reactor, color = Timepoint)) +
+  geom_point() +
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(ord ~ Treatment) +
+  scale_color_manual(values = c("red3", "deepskyblue3")) +
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="bottom", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Reads per million total reads", y = "Hours post DRW reactor re-flood")
+
+# CAZY
+d3_CAZy_avg %>% 
+  ggplot(aes(median, Reactor, color = Timepoint)) +
+  geom_point() +
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(ord ~ Treatment) +
+  scale_color_manual(values = c("red3", "deepskyblue3")) +
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="bottom", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Reads per million total reads", y = "Hours post DRW reactor re-flood")
+```
+
+### Create similar plot for nutrient concentrations
+```{r}
+icp_ic_results <- read_csv("data/GFBR_icp_ic_results.csv") %>% 
+  unite(datetime, c(date, time), sep = " ", remove = FALSE) #combine date and time
+
+RNA_nutrient_conc <- icp_ic_results %>% 
+  filter(cycle == 2) %>% 
+  filter(sample_timepoint == 24 | sample_timepoint == 120)
+
+conc_plot <- RNA_nutrient_conc %>%
+  select(!c(ICP_IC_batch, cycle, hours_after_start, replicate, ICP_sample, 
+            IC_sample, RNA_sample, datetime, date, time)) %>% 
+  pivot_longer(cols = c("initial_p", "initial_no3", "Al", "Ca", "Fe", 
+                        "Mg", "Mn", "P", "S", "Cl", "NO2", "NO3", "PO4", 
+                        "SO4"), names_to = "nutrient", values_to = "concentration") %>% 
+  group_by(nutrient, treatment, reactor, sample_timepoint) %>% 
+  summarize(median = median(concentration), 
+            upper_lim = max(concentration), 
+            lower_lim = min(concentration))
+
+conc_plot$sample_timepoint <- as.character(conc_plot$sample_timepoint)
+
+conc_plot %>% 
+  filter(!nutrient == "initial_p") %>% # turn these off/on depending one what needs to be shown
+  filter(!nutrient == "initial_no3") %>%
+  filter(!nutrient == "Ca") %>%
+  filter(!nutrient == "Cl") %>%
+  filter(!nutrient == "Mg") %>% 
+  filter(!nutrient == "Fe") %>%
+  filter(!nutrient == "NO3") %>%
+  filter(!nutrient == "S") %>%
+  filter(!nutrient == "SO4") %>%
+  ggplot(aes(median, reactor, color = sample_timepoint)) +
+  geom_point() +
+  #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
+  geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
+  facet_grid(nutrient ~ treatment) +
+  scale_color_manual(values = c("red3", "deepskyblue3")) +
+  theme(panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_blank(), 
+        strip.background = element_rect(fill = "grey"), 
+        panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
+        legend.position ="bottom", 
+        axis.text.y = element_text(size = 10)) +
+  labs(x = "Concentration (mg/L)", y = "Hours post DRW reactor re-flood")
+```
+
+## Prep for Kaiju
+
+### Subset the m8 files for read names mapping to the genes
+```{r}
+# ppk
+ppk_hits <- dmnd_out_ppk %>% 
+  select(query)
+
+ppk_sub <- ppk_querycol[duplicated(ppk_querycol), ]
+
+## N cycle
+# nap
+nap <- annotation_map %>% 
+  filter(gene == "Nap")
+
+nap_hits <- dmnd_out_Ncycle %>% 
+  select(c(query, subject)) %>% 
+  filter(subject %in% nap$subject) %>% 
+  select(query)
+
+nap_sub <- nap_hits[duplicated(nap_hits), ]
+
+# nar
+nar <- annotation_map %>% 
+  filter(gene == "Nar")
+
+nar_hits <- dmnd_out_Ncycle %>% 
+  select(c(query, subject)) %>% 
+  filter(subject %in% nar$subject) %>% 
+  select(query)
+
+nar_sub <- nar_hits[duplicated(nar_hits), ]
+
+# nirk
+nirk <- annotation_map %>% 
+  filter(gene == "NirK")
+
+nirk_hits <- dmnd_out_Ncycle %>% 
+  select(c(query, subject)) %>% 
+  filter(subject %in% nirk$subject) %>% 
+  select(query)
+
+nirk_sub <- nirk_hits[duplicated(nirk_hits), ]
+
+# qnor
+qnor <- annotation_map %>% 
+  filter(gene == "qNorZ")
+
+qnor_hits <- dmnd_out_Ncycle %>% 
+  select(c(query, subject)) %>% 
+  filter(subject %in% qnor$subject) %>% 
+  select(query)
+
+qnor_sub <- qnor_hits[duplicated(qnor_hits), ]
+
+## CAZy
+# AA0
+AA0_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA0") %>% 
+  select(query)
+
+AA0_sub <- AA0_hits[duplicated(AA0_hits), ]
+
+# AA1
+AA1_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA1") %>% 
+  select(query)
+
+AA1_sub <- AA1_hits[duplicated(AA1_hits), ]
+
+# AA1_1
+AA1_1_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA1_1") %>% 
+  select(query)
+
+AA1_1_sub <- AA1_1_hits[duplicated(AA1_1_hits), ]
+
+# AA1_2
+AA1_2_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA1_2") %>% 
+  select(query)
+
+AA1_2_sub <- AA1_2_hits[duplicated(AA1_2_hits), ]
+
+# AA2
+AA2_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA2") %>% 
+  select(query)
+
+AA2_sub <- AA2_hits[duplicated(AA2_hits), ]
+
+# AA3
+AA3_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA3") %>% 
+  select(query)
+
+AA3_sub <- AA3_hits[duplicated(AA3_hits), ]
+
+# AA3_2
+AA3_2_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA3_2") %>% 
+  select(query)
+
+AA3_2_sub <- AA3_2_hits[duplicated(AA3_2_hits), ]
+
+# AA4
+AA4_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA4") %>% 
+  select(query)
+
+AA4_sub <- AA4_hits[duplicated(AA4_hits), ]
+
+# AA5
+AA5_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA5") %>% 
+  select(query)
+
+AA5_sub <- AA5_hits[duplicated(AA5_hits), ]
+
+# AA5_1
+AA5_1_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA5_1") %>% 
+  select(query)
+
+AA5_1_sub <- AA5_1_hits[duplicated(AA5_1_hits), ]
+
+# AA6
+AA6_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA6") %>% 
+  select(query)
+
+AA6_sub <- AA6_hits[duplicated(AA6_hits), ]
+
+# AA10
+AA10_hits <- dmnd_out_CAZy %>% 
+  select(c(query, classI)) %>% 
+  filter(classI == "AA10") %>% 
+  select(query)
+
+AA10_sub <- AA10_hits[duplicated(AA10_hits), ]
+
+## export the files to use in linux (these will need to be transferred with FileZilla)
+write_csv(ppk_sub, "data/RNA/ppk_kaiju.csv")
+write_csv(nap_sub, "data/RNA/nap_sub_kaiju.csv")
+write_csv(nar_sub, "data/RNA/nar_sub_kaiju.csv")
+write_csv(nirk_sub, "data/RNA/nirk_sub_kaiju.csv")
+write_csv(qnor_sub, "data/RNA/qnor_sub_kaiju.csv")
+write_csv(AA0_sub, "data/RNA/AA0_sub_kaiju.csv")
+write_csv(AA1_sub, "data/RNA/AA1_sub_kaiju.csv")
+write_csv(AA1_1_sub, "data/RNA/AA1_1_sub_kaiju.csv")
+write_csv(AA1_2_sub, "data/RNA/AA1_2_sub_kaiju.csv")
+write_csv(AA2_sub, "data/RNA/AA2_sub_kaiju.csv")
+write_csv(AA3_sub, "data/RNA/AA3_sub_kaiju.csv")
+write_csv(AA3_2_sub, "data/RNA/AA3_2_sub_kaiju.csv")
+write_csv(AA4_sub, "data/RNA/AA4_sub_kaiju.csv")
+write_csv(AA5_sub, "data/RNA/AA5_sub_kaiju.csv")
+write_csv(AA5_1_sub, "data/RNA/AA5_1_sub_kaiju.csv")
+write_csv(AA6_sub, "data/RNA/AA6_sub_kaiju.csv")
+write_csv(AA10_sub, "data/RNA/AA10_sub_kaiju.csv")
+```
+
+### filterbyname in linux
+```{bash}
+copy all the fastq.gz samples to the "forKaiju" folder
+
+created .txt files for each of the gene subset files (copy/paste the query column into nano)
+
+# run this to load the package
+export PATH=/programs/bbmap-39.03:$PATH
+	
+# basic function setup
+filterbyname.sh in=*.fastq out=*_ppk.fastq names=ppk.txt include=t
+
+# to run one sample at a time:
+filterbyname.sh in=100_trim_cut_181049_201_1.fastq out=100_trim_cut_ppk.fastq names=ppk.txt include=t 
+
+# to loop through the samples in each folder for each gene
+## (change the "_PN_DRW" as needed for each folder)
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=ppk.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> ppk_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=nap.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> nap_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=nar.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> nar_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=nirk.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> nirk_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=qnor.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> qnor_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA0.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA0_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA1.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA1_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA1_1.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA1_1_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA1_2.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA1_2_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA2.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA2_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA3.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA3_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA3_2.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA3_2_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA4.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA4_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA5.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA5_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA5_1.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA5_1_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA6.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA6_PN_DRW.fastq.gz 
+done
+
+for f in ./*.fastq;
+    do results="$(basename $f .fastq)"
+    filterbyname.sh in=$f out=$results.fastq.gz names=AA10.txt include=t overwrite=t &&
+    cat $results.fastq.gz >> AA10_PN_DRW.fastq.gz 
+done
+```
+
+## Kaiju output
+
+### import compiled phyla data from kaiju
+```{r}
+control_CNS <- read_csv("data/RNA/control_CNS_combined.csv") %>% 
+  separate(gene_condition, c("gene", "treatment", "reactor"), sep = "_", remove = FALSE) %>% 
+  mutate(percent = (reads/total)*100)
+
+control_DRW <- read_csv("data/RNA/control_DRW_combined.csv") %>%
+  separate(gene_condition, c("gene", "treatment", "reactor"), sep = "_", remove = FALSE) %>% 
+  mutate(percent = (reads/total)*100)
+
+P_CNS <- read_csv("data/RNA/P_CNS_combined.csv") %>% 
+  separate(gene_condition, c("gene", "treatment", "reactor"), sep = "_", remove = FALSE) %>% 
+  mutate(percent = (reads/total)*100)
+
+P_DRW <- read_csv("data/RNA/P_DRW_combined.csv") %>% 
+  separate(gene_condition, c("gene", "treatment", "reactor"), sep = "_", remove = FALSE) %>% 
+  mutate(percent = (reads/total)*100)
+
+PN_CNS <- read_csv("data/RNA/PN_CNS_combined.csv") %>% 
+  separate(gene_condition, c("gene", "treatment", "reactor"), sep = "_", remove = FALSE) %>% 
+  mutate(percent = (reads/total)*100)
+
+PN_DRW <- read_csv("data/RNA/PN_DRW_combined.csv") %>% 
+  separate(gene_condition, c("gene", "treatment", "reactor"), sep = "_", remove = FALSE) %>% 
+  mutate(percent = (reads/total)*100)
+
+## Join together
+kaiju_compiled <- rbind(control_CNS, control_DRW, P_CNS, P_DRW, PN_CNS, PN_DRW) %>% 
+  mutate(treatment = ifelse(treatment == "control", "Control", treatment)) %>%
+  mutate(treatment = ifelse(treatment == "PN", "P+N", treatment))
+```
+
+### taxonomy plots
+```{r}
+source("code/colors_and_shapes.R")
+
+## ppk
+kaiju_compiled %>% 
+  filter(gene == "ppk") %>% 
+  filter(percent > 1) %>%
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(tol(12))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## nap
+kaiju_compiled %>% 
+  filter(gene == "nap") %>% 
+  filter(percent > 1) %>%
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(tol(12))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## nar
+kaiju_compiled %>% 
+  filter(gene == "nar") %>% 
+  filter(percent > 1) %>%
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(tol(12))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## nirk
+kaiju_compiled %>% 
+  filter(gene == "nirk") %>% 
+  filter(percent > 1) %>%
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(tol(12))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## qnor
+kaiju_compiled %>% 
+  filter(gene == "qnor") %>% 
+  filter(percent > 1) %>%
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(tol(12))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA0
+kaiju_compiled %>% 
+  filter(gene == "AA0") %>% 
+  filter(percent > 1) %>%
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(15))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA1
+kaiju_compiled %>% 
+  filter(gene == "AA1") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA1_1
+kaiju_compiled %>% 
+  filter(gene == "AA1.1") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+## AA1_2
+kaiju_compiled %>% 
+  filter(gene == "AA1.2") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA2
+kaiju_compiled %>% 
+  filter(gene == "AA2") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(22))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA3
+kaiju_compiled %>% 
+  filter(gene == "AA3") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA3_2
+kaiju_compiled %>% 
+  filter(gene == "AA3.2") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA4
+kaiju_compiled %>% 
+  filter(gene == "AA4") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA5
+kaiju_compiled %>% 
+  filter(gene == "AA5") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA5_1
+kaiju_compiled %>% 
+  filter(gene == "AA5.1") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA6
+kaiju_compiled %>% 
+  filter(gene == "AA6") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## AA10
+kaiju_compiled %>% 
+  filter(gene == "AA10") %>% 
+  filter(percent > 1) %>% 
+  ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_grid(~treatment) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = phylum_colors) +
+  #scale_fill_manual(values=as.vector(stepped(18))) +
+  xlab("Reactor") +
+  ylab("Relative Abundance") +
+  labs(fill = "Phylum") +
+  #theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))
+
+## Left off here - plot each one and combine with ggarrange
+### Might need to adjust colors depending on which ones pop up most often/near each other
+```
+
+
+
+############# DESEQ??????????
+
+
+## DESeq
+
+### Prepare count data
+```{r}
+library(DESeq2)
+
+#counts data
+cts <- dmnd_out_ppk %>%
+  group_by(fn) %>%
+  summarize(raw.count = n()) %>%
+  pivot_wider(names_from = fn, values_from = raw.count) %>% 
+  data.frame
+
+ppk <- "ppk"
+
+rownames(cts) <- ppk
+
+counts_data <- cts #%>% 
+  #select(!c(hf_cs_p2_t0_h0_prok, hf_cs_p2_t10_h100_prok))
+
+#sample info
+sampleinfo <- read_count_ppk %>% 
+  select(!c(port, timepoint)) %>% 
+  data.frame
+
+rownames(sampleinfo) <- sampleinfo$fn
+
+coldata <- sampleinfo %>% 
+  select(!fn) #%>% 
+  #filter(condition == "drw")
+```
+
+### check data
+```{r}
+# make sure the row names in coldata match the column names in counts_data
+all(colnames(counts_data) %in% rownames(coldata))
+
+# make sure they are also in the same order
+all(colnames(counts_data) == rownames(coldata))
+```
+
+### construct a DESeqDataSet object
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts_data,
+                              colData = coldata,
+                              design = ~ condition)
+
+dds
+```
+
+### set the factor level
+```{r}
+#dds$hours_cat <- relevel(dds$hours_cat, ref = "A")
+
+dds$condition <- relevel(dds$condition, ref = "cs")
+```
+
+### Run DESeq2
+```{r}
+#dds <- DESeq(dds)
+dds <- estimateSizeFactors(dds)
+dds <- estimateDispersionsGeneEst(dds)
+dispersions(dds) <- mcols(dds)$dispGeneEst
+
+
+
+res <- results(dds)
+```
+
+
+### Explore results
+```{r}
+res
+```
+

@@ -18,6 +18,9 @@ editor_options:
 #install.packages("tidyverse")
 library(tidyverse)
 library(pals)
+library(ggpubr)
+#install.packages("paletteer")
+library(paletteer)
 ```
 
 ## Load data
@@ -659,7 +662,7 @@ kaiju_compiled <- rbind(control_CNS, control_DRW, P_CNS, P_DRW, PN_CNS, PN_DRW) 
 source("code/colors_and_shapes.R")
 
 ## ppk
-kaiju_compiled %>% 
+ppk_taxplot <- kaiju_compiled %>% 
   filter(gene == "ppk") %>% 
   filter(percent > 1) %>%
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -672,14 +675,15 @@ kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 12),
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## nap
-kaiju_compiled %>% 
+nap_taxplot <- kaiju_compiled %>% 
   filter(gene == "nap") %>% 
   filter(percent > 1) %>%
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -693,13 +697,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## nar
-kaiju_compiled %>% 
+nar_taxplot <- kaiju_compiled %>% 
   filter(gene == "nar") %>% 
   filter(percent > 1) %>%
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -713,13 +718,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## nirk
-kaiju_compiled %>% 
+nirk_taxplot <- kaiju_compiled %>% 
   filter(gene == "nirk") %>% 
   filter(percent > 1) %>%
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -733,13 +739,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## qnor
-kaiju_compiled %>% 
+qnor_taxplot <- kaiju_compiled %>% 
   filter(gene == "qnor") %>% 
   filter(percent > 1) %>%
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -753,13 +760,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA0
-kaiju_compiled %>% 
+AA0_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA0") %>% 
   filter(percent > 1) %>%
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -773,13 +781,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA1
-kaiju_compiled %>% 
+AA1_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA1") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -793,13 +802,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA1_1
-kaiju_compiled %>% 
+AA1.1_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA1.1") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -813,12 +823,13 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 ## AA1_2
-kaiju_compiled %>% 
+AA1.2_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA1.2") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -832,13 +843,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA2
-kaiju_compiled %>% 
+AA2_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA2") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -852,13 +864,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA3
-kaiju_compiled %>% 
+AA3_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA3") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -872,13 +885,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA3_2
-kaiju_compiled %>% 
+AA3.2_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA3.2") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -892,13 +906,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA4
-kaiju_compiled %>% 
+AA4_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA4") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -912,13 +927,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA5
-kaiju_compiled %>% 
+AA5_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA5") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -932,13 +948,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA5_1
-kaiju_compiled %>% 
+AA5.1_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA5.1") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -952,13 +969,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA6
-kaiju_compiled %>% 
+AA6_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA6") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -972,13 +990,14 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
 ## AA10
-kaiju_compiled %>% 
+AA10_taxplot <- kaiju_compiled %>% 
   filter(gene == "AA10") %>% 
   filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = taxon_name)) +
@@ -992,13 +1011,53 @@ kaiju_compiled %>%
   labs(fill = "Phylum") +
   #theme_classic() +
   theme(axis.text = element_text(size = 12), 
+        legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
         legend.title = element_text(size = 12), 
         strip.text = element_text(size = 12))
 
-## Left off here - plot each one and combine with ggarrange
-### Might need to adjust colors depending on which ones pop up most often/near each other
+# reorder the data so that most abundanct is at the bottom of the graph
+ppk_taxplot$data$taxon_name <- reorder(ppk_taxplot$data$taxon_name, ppk_taxplot$data$percent)
+nap_taxplot$data$taxon_name <- reorder(nap_taxplot$data$taxon_name, nap_taxplot$data$percent)
+nar_taxplot$data$taxon_name <- reorder(nar_taxplot$data$taxon_name, nar_taxplot$data$percent)
+nirk_taxplot$data$taxon_name <- reorder(nirk_taxplot$data$taxon_name, nirk_taxplot$data$percent)
+qnor_taxplot$data$taxon_name <- reorder(qnor_taxplot$data$taxon_name, qnor_taxplot$data$percent)
+AA0_taxplot$data$taxon_name <- reorder(AA0_taxplot$data$taxon_name, AA0_taxplot$data$percent)
+AA1_taxplot$data$taxon_name <- reorder(AA1_taxplot$data$taxon_name, AA1_taxplot$data$percent)
+AA1.1_taxplot$data$taxon_name <- reorder(AA1.1_taxplot$data$taxon_name, AA1.1_taxplot$data$percent)
+AA1.2_taxplot$data$taxon_name <- reorder(AA1.2_taxplot$data$taxon_name, AA1.2_taxplot$data$percent)
+AA2_taxplot$data$taxon_name <- reorder(AA2_taxplot$data$taxon_name, AA2_taxplot$data$percent)
+AA3_taxplot$data$taxon_name <- reorder(AA3_taxplot$data$taxon_name, AA3_taxplot$data$percent)
+AA3.2_taxplot$data$taxon_name <- reorder(AA3.2_taxplot$data$taxon_name, AA3.2_taxplot$data$percent)
+AA4_taxplot$data$taxon_name <- reorder(AA4_taxplot$data$taxon_name, AA4_taxplot$data$percent)
+AA5_taxplot$data$taxon_name <- reorder(AA5_taxplot$data$taxon_name, AA5_taxplot$data$percent)
+AA5.1_taxplot$data$taxon_name <- reorder(AA5.1_taxplot$data$taxon_name, AA5.1_taxplot$data$percent)
+AA6_taxplot$data$taxon_name <- reorder(AA6_taxplot$data$taxon_name, AA6_taxplot$data$percent)
+AA10_taxplot$data$taxon_name <- reorder(AA10_taxplot$data$taxon_name, AA10_taxplot$data$percent)
+
+#ggarrange(ppk_taxplot, nap_taxplot, nar_taxplot, nirk_taxplot, qnor_taxplot, ncol = 3, nrow = 2)
+
+#ggarrange(AA0_taxplot, AA1_taxplot, AA1.1_taxplot, AA1.2_taxplot, 
+          #AA2_taxplot, AA3_taxplot, AA3.2_taxplot, AA4_taxplot, 
+          #AA5_taxplot, AA5.1_taxplot, AA6_taxplot, AA10_taxplot, ncol = 4, nrow = 3)
+
+# cutting out AA10 since it only pops up in three groups (P DRW, and both P+Ns)
+# and unclassified/unassigned makes up 79% of those on average
+# meaning it's not biologically relevant/meaningful
+ggarrange(nap_taxplot, nar_taxplot, nirk_taxplot, qnor_taxplot,
+          AA0_taxplot, AA1_taxplot, AA1.1_taxplot, AA1.2_taxplot, 
+          AA2_taxplot, AA3_taxplot, AA3.2_taxplot, AA4_taxplot, 
+          AA5_taxplot, AA5.1_taxplot, AA6_taxplot, ppk_taxplot, ncol = 4, nrow = 4,
+          labels = c("nap", "nar", "nirK", "qNor", "AA0", "AA1", "AA1.1", 
+                     "AA1.2", "AA2", "AA3", "AA3.2", "AA4", "AA5", "AA5.1", "AA6", "ppk"),
+          common.legend = FALSE)
+
+par(mar = c(1, 1, 1, 1))
+plot(NULL, xaxt='n', yaxt='n', ylab='', xlab='', bty='n', xlim=c(0,1), ylim=c(0,1))
+legend("topleft", ncol = 2, legend =c('Proteobacteria', 'Actinobacteria', 'Unclassified/Unassigned', 'Ascomycota', 'Basidiomycota', 'Firmicutes', 'Bacteroidetes', 'Mucoromycota', 'Chloroflexi', 'Acidobacteria', 'Verrucomicrobia', 'Candidatus Rokubacteria', 'Deinococcus-Thermus', 'Candidate Division NC10', 'Euryarchaeota', 'Planctomycetes', 'Candidatus Handelsmanbacteria', 'Chlorophyta', 'Chytridiomycota', 'Ciliophora', 'Euglenozoa', 'Foraminifera', 'Perkinsozoa', 'Apicomplexa', 'Haptophyta', 'Heterolobosea', 'Microsporidia', 'Bacillariophyta', 'Nitrospirae', 'Oomycota', 'Parabasalia', 'Evosea', 'Rhodophyta', 'Zoopagomycota', 'Cyanobacteria', 'Cercozoa', 'Fornicata', 'Imbricatea', 'Viruses'), pch=15, pt.cex=3, cex=1.2, bty='n',
+    col = c('gray20', '#0F6B99FF', '#7EC3E5FF', '#B2E5FFFF', '#6B990FFF', '#A3CC51FF', '#E5FFB2FF', '#99540FFF', '#CC8E51FF', '#FFD8B2FF', '#990F0FFF','#CC5151FF', '#FFB2B2FF', '#422CB2FF', '#8F7EE5FF', '#BFB2FFFF', 'grey', 'gray50', 'royalblue', 'darkorange', 'olivedrab', 'greenyellow', 'green', 'darkorchid1', '#657CDC', '#A77D87', '#55AD91', '#D47FE7', '#D7E63E', 'goldenrod', '#9BA195', '#B0A2E8', '#92AB76', '#DBB46E', '#E355A9', '#A8E8EA', '#E3C2DD', '#E38B80', '#5ABF66'))
+mtext("Phylum", at=0.1, cex=1.2)
 ```
 
 

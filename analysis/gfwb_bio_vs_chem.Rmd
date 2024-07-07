@@ -226,61 +226,78 @@ control_plot <- tidyset %>%
   filter(!reactor == "STOCK") %>%
   filter(treatment == "Control") %>%
   ggplot(aes(x = hours_after_start, y = P, color = reactor)) + 
-  geom_line() +
+  geom_line(size = 1) +
   scale_x_continuous(breaks = breaks_C, labels = timepoints_C) +
   #facet_wrap(~treatment, ncol = 1) +
   geom_vline(xintercept = c(120, 168, 288), color="#BB0000", linetype="dashed") +
   theme_classic() +
-  labs(color = "Reactor:") +
+  labs(color = "Reactor:", title = "Control") +
   ylim(c(0,0.3)) +
   xlab("Hours After Start") +
   ylab ("P Concentration (mg/L)") +
   theme(legend.position = "bottom",
         plot.margin = unit(c(1,1,1,1), "cm"),
         panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
-        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
+        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2),
+        axis.text = element_text(size = 15), 
+        axis.title = element_text(size = 15), 
+        legend.text = element_text(size = 15), 
+        legend.title = element_text(size = 15), 
+        strip.text = element_text(size = 15),
+        plot.title = element_text(size = 15))
 
 # P plot
 P_plot <- tidyset %>%
   filter(!reactor == "STOCK") %>%
   filter(treatment == "P") %>%
   ggplot(aes(x = hours_after_start, y = P, color = reactor)) + 
-  geom_line() +
+  geom_line(size = 1) +
   scale_x_continuous(breaks = breaks_P, labels = timepoints_P) +
   #facet_wrap(~treatment, ncol = 1) +
   geom_vline(xintercept = c(456, 504, 624), color="#BB0000", linetype="dashed") +
   theme_classic() +
-  labs(color = "Reactor:") +
+  labs(color = "Reactor:", title = "P") +
   ylim(c(0,0.3)) +
   xlab("Hours After Start") +
   ylab ("P Concentration (mg/L)") +
   theme(legend.position = "bottom",
         plot.margin = unit(c(1,1,1,1), "cm"),
         panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
-        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
+        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2),
+        axis.text = element_text(size = 15), 
+        axis.title = element_text(size = 15), 
+        legend.text = element_text(size = 15), 
+        legend.title = element_text(size = 15), 
+        strip.text = element_text(size = 15),
+        plot.title = element_text(size = 15))
 
 # N/P plot
 NP_plot <- tidyset %>%
   filter(!reactor == "STOCK") %>%
   filter(treatment == "P+N") %>%
   ggplot(aes(x = hours_after_start, y = P, color = reactor)) + 
-  geom_line() +
+  geom_line(size = 1) +
   scale_x_continuous(breaks = breaks_N, labels = timepoints_N) +
   #facet_wrap(~treatment, ncol = 1) +
   geom_vline(xintercept = c(792, 840, 960), color="#BB0000", linetype="dashed") +
   theme_classic() +
-  labs(color = "Reactor:") +
+  labs(color = "Reactor:", title = "P+N") +
   ylim(c(0,0.3)) +
   xlab("Hours After Start") +
   ylab ("P Concentration (mg/L)") +
   theme(legend.position = "bottom",
         plot.margin = unit(c(1,1,1,1), "cm"),
         panel.grid.major = element_line(color = "grey", linewidth = 0.25, linetype = 2),
-        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2))
+        panel.grid.minor = element_line(color = "grey", linewidth = 0.25, linetype = 2),
+        axis.text = element_text(size = 15), 
+        axis.title = element_text(size = 15), 
+        legend.text = element_text(size = 15), 
+        legend.title = element_text(size = 15), 
+        strip.text = element_text(size = 15),
+        plot.title = element_text(size = 15))
 
 ggarrange(control_plot, P_plot, NP_plot, ncol = 1, 
-          labels = c("Control", "Phosphate", "Phosphate/Nitrate"), 
-          hjust = -1, vjust = 1.5,
+          hjust = -5, vjust = 1.5,
           common.legend = TRUE)
 ```
 

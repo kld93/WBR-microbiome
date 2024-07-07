@@ -107,7 +107,7 @@ shared <- taxa_for_pcoa %>%
   rename("name" = "taxon_name") %>% 
   group_by(Group) %>% 
   #summarize(total = sum(value)) %>% 
-  #arrange(total) #this shows that 10W is the lowest 10W is the lowest at 15700522 reads
+  #arrange(total) #this shows that 10W is the lowest at 15700522 reads
   mutate(total = sum(value)) %>%
   #filter(total > 15700521) %>% 
   group_by(name) %>% 

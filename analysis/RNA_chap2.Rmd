@@ -21,6 +21,7 @@ library(pals)
 library(ggpubr)
 #install.packages("paletteer")
 library(paletteer)
+library(vegan)
 ```
 
 ## Load data
@@ -330,6 +331,159 @@ conc_plot %>%
         axis.text.y = element_text(size = 10)) +
   labs(x = "Concentration (mg/L)", y = "Hours post DRW reactor re-flood")
 ```
+
+## PCoA
+
+#### load packages and setup the data
+```{r}
+# following: https://bioinformatics-core-shared-training.github.io/RNAseq-R/align-and-count.nb.html
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("org.Mm.eg.db")
+
+library(Rsubread)
+library(Glimma)
+library(gplots)
+library(org.Mm.eg.db)
+library(RColorBrewer)
+library(edgeR)
+install.packages("edgeR")
+
+# Get my data ready to fit the workflow in the tutorial:
+N_count <- dmnd_out_Ncycle %>%
+    left_join(annotation_map, join_by(subject), multiple = "all") %>% 
+    filter(gene %in% c("Nap", "Nar", "NirK", "NirS", "cNorB", "qNorZ", "NosZ")) %>% 
+    mutate(gene = ifelse(gene == "cNorB", "cNor", gene)) %>% 
+    mutate(gene = ifelse(gene == "qNorZ", "qNor", gene))
+
+ppk_count <-  dmnd_out_ppk %>%
+    mutate(gene = "ppk") %>% # Add column with gene name (one gene so annoation map not needed)
+    rename(qend = `qend,`)
+
+CAZy_count <- dmnd_out_CAZy %>%
+  filter(classI == "AA0" | classI == "AA1" | classI == "AA1_1" | classI == "AA1_2" | classI == "AA1_3" | classI == "AA2" | classI == "AA3" | classI == "AA3_1" | classI == "AA3_2" | classI == "AA3_3" | classI == "AA4" | classI == "AA5" | classI == "AA5_1" | classI == "AA5_2" | classI == "AA6" | classI == "AA7" | classI == "AA8" | classI == "AA9" | classI == "AA10" | classI == "AA11" | classI == "AA12" | classI == "AA13" | classI == "AA14" | classI == "AA15" | classI == "AA16" | classI == "AA17") %>% 
+  select(!c(temp, source, classII)) %>% 
+  rename(gene = classI)
+
+gene_count_combined <- rbind(N_count, ppk_count, CAZy_count)
+
+write_csv(gene_count_combined, file = "data/RNA/gene_count_combined.csv")
+
+sampleinfo <- read_csv(file = "data/RNA/deseq_sampleinfo.csv")
+```
+
+#### Filtering out lowly expressed genes
+```{r}
+seqdata <- gene_count_combined %>% 
+  group_by(fn, gene) %>% 
+  summarize(raw_count = n()) %>% 
+  pivot_wider(names_from = fn, values_from = raw_count) %>% 
+  as.data.frame()
+
+countdata <- seqdata[, -1]
+
+rownames(countdata) <- seqdata[,1]
+
+# Obtain CPMs
+countdata[is.na(countdata)] <- 0
+myCPM <- cpm(countdata)
+# Have a look at the output
+head(myCPM)
+
+# Which values in myCPM are greater than 0.5?
+thresh <- myCPM > 0.5
+# This produces a logical matrix with TRUEs and FALSEs
+head(thresh)
+
+# Summary of how many TRUEs there are in each row
+# There are 4 genes that have TRUEs in all 25 samples.
+table(rowSums(thresh))
+
+# we would like to keep genes that have at least 2 TRUES in each row of thresh
+keep <- rowSums(thresh) >= 2
+# Subset the rows of countdata to keep the more highly expressed genes
+counts.keep <- countdata[keep,]
+summary(keep)
+dim(counts.keep)
+
+# Let's have a look and see whether our threshold of 0.5 does indeed correspond to a count of about 10-15
+# We will look at the first sample
+plot(myCPM[,1],countdata[,1])
+# Let us limit the x and y-axis so we can actually look to see what is happening at the smaller counts
+plot(myCPM[,1],countdata[,1],ylim=c(0,50),xlim=c(0,3))
+# Add a vertical line at 0.5 CPM
+abline(v=0.5)
+```
+
+#### concert counts to DGEList object
+```{r}
+dgeObj <- DGEList(counts.keep)
+# have a look at dgeObj
+dgeObj
+# See what slots are stored in dgeObj
+names(dgeObj)
+# Library size information is stored in the samples slot
+dgeObj$samples
+```
+
+#### quality control
+```{r}
+# First, we can check how many reads we have for each sample in the dgeObj
+dgeObj$samples$lib.size
+
+# The names argument tells the barplot to use the sample names on the x-axis
+# The las argument rotates the axis names
+barplot(dgeObj$samples$lib.size, names=colnames(dgeObj), las=2)
+# Add a title to the plot
+title("Barplot of library sizes")
+
+# Get log2 counts per million
+logcounts <- cpm(dgeObj,log=TRUE)
+# Check distributions of samples using boxplots
+boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2)
+# Let's add a blue horizontal line that corresponds to the median logCPM
+abline(h=median(logcounts),col="blue")
+title("Boxplots of logCPMs (unnormalised)")
+```
+
+#### Multidimensional scaling plots
+```{r}
+#install.packages("remotes")
+remotes::install_github("jrthompson54/DGE.Tools2")
+library(DGE.Tools2)
+```
+
+```{r}
+plotMDS(dgeObj)
+
+# We specify the option to let us plot two plots side-by-side
+par(mfrow=c(1,2))
+# Let's set up colour schemes for CellType
+# How many cell types and in what order are they stored?
+levels(sampleinfo$Reactor)
+## Let's choose purple for basal and orange for luminal
+col.cell <- c("purple","orange")[sampleinfo$Reactor]
+data.frame(sampleinfo$Reactor,col.cell)
+
+# Redo the MDS with cell type colouring
+plotMDS(dgeObj,col=col.cell)
+# Let's add a legend to the plot so we know which colours correspond to which cell type
+legend("topleft",fill=c("purple","orange"),legend=levels(sampleinfo$CellType))
+# Add a title
+title("Cell type")
+
+# Similarly for status
+levels(sampleinfo$Status)
+col.status <- c("blue","red","dark green")[sampleinfo$Status]
+col.status
+plotMDS(dgeObj,col=col.status)
+legend("topleft",fill=c("blue","red","dark green"),legend=levels(sampleinfo$Status),cex=0.8)
+title("Status")
+```
+
+
+
 
 ## Prep for Kaiju
 
@@ -1062,7 +1216,6 @@ mtext("Phylum", at=0.1, cex=1.2)
 
 
 
-############# DESEQ??????????
 
 
 ## DESeq

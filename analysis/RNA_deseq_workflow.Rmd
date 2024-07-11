@@ -1,0 +1,422 @@
+---
+title: "Chap 2 - DESeq workflow"
+author: "Katie L. Duggan"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Load packages
+```{r}
+# following: https://bioinformatics-core-shared-training.github.io/RNAseq-R/align-and-count.nb.html
+#if (!require("BiocManager", quietly = TRUE))
+    #install.packages("BiocManager")
+
+#BiocManager::install("gplots")
+
+#install.packages("edgeR")
+library(gplots)
+library(RColorBrewer)
+library(tidyverse)
+library(edgeR)
+library(pheatmap)
+```
+
+## Load data
+```{r}
+# Read in the metadata (i.e., read counts)
+read_count = read.csv("data/RNA/chap2_woodchip_metadata.csv")
+
+# Read in the annotation map for denitrifying genes
+annotation_map = read_csv("data/annotation_map.csv", col_types = "cc", col_names = c("gene","subject"))
+
+# Read in the count data (from DIAMOND)
+## ppk
+dmnd_out_ppk <- read_csv("data/RNA/chap2_readVrefs_ppk2.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend,", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+## N cycle
+dmnd_out_Ncycle = read_csv("C:/github/WBR-microbiome/data/RNA/chap2_readVrefs_Ncycle.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+## CAZy
+dmnd_out_CAZy <- read_delim(file = "data/RNA/readVrefs_CAZy.m8")
+
+colnames(dmnd_out_CAZy) <- c("query", "subject", "pid", "aln_len", "mismatches", "gaps", 
+                             "qstart", "qend", "sstart", "send", "e-value", "bit", "fn")
+
+dmnd_out_CAZy <- dmnd_out_CAZy %>% 
+  mutate(source = gsub("\\|.*", "", subject),
+         temp = gsub("^[^\\|]+\\||-.*", "", subject),
+         classI = gsub("\\|.*", "", temp),
+         classII = sub(".*\\|", "", temp))
+
+# Rename the samples
+dmnd_out_ppk <- dmnd_out_ppk %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "DRW_P_120_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "CNS_N_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "CNS_N_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "DRW_N_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "DRW_N_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "CNS_N_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "CNS_N_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "DRW_N_120_R1", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "DRW_N_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "CNS_C_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "CNS_C_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "DRW_C_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "DRW_C_24_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "CNS_C_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "CNS_C_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "DRW_C_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "DRW_C_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "CNS_P_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "CNS_P_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "DRW_P_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "DRW_P_24_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "CNS_P_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "CNS_P_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "DRW_P_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_R1", fn))
+
+dmnd_out_Ncycle <- dmnd_out_Ncycle %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "DRW_P_120_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "CNS_N_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "CNS_N_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "DRW_N_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "DRW_N_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "CNS_N_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "CNS_N_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "DRW_N_120_R1", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "DRW_N_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "CNS_C_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "CNS_C_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "DRW_C_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "DRW_C_24_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "CNS_C_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "CNS_C_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "DRW_C_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "DRW_C_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "CNS_P_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "CNS_P_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "DRW_P_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "DRW_P_24_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "CNS_P_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "CNS_P_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "DRW_P_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_R1", fn))
+
+dmnd_out_CAZy <- dmnd_out_CAZy %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "DRW_P_120_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "CNS_N_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "CNS_N_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "DRW_N_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "DRW_N_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "CNS_N_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "CNS_N_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "DRW_N_120_R1", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "DRW_N_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "CNS_C_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "CNS_C_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "DRW_C_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "DRW_C_24_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "CNS_C_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "CNS_C_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "DRW_C_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "DRW_C_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "CNS_P_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "CNS_P_24_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "DRW_P_24_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "DRW_P_24_R2", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "CNS_P_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "CNS_P_120_R2", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "DRW_P_120_R1", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_R1", fn))
+
+# Get my data ready to fit the workflow in the tutorial:
+N_count <- dmnd_out_Ncycle %>%
+    left_join(annotation_map, join_by(subject), multiple = "all") %>% 
+    filter(gene %in% c("Nap", "Nar", "NirK", "NirS", "cNorB", "qNorZ", "NosZ")) %>% 
+    mutate(gene = ifelse(gene == "cNorB", "cNor", gene)) %>% 
+    mutate(gene = ifelse(gene == "qNorZ", "qNor", gene))
+
+ppk_count <-  dmnd_out_ppk %>%
+    mutate(gene = "ppk") %>% # Add column with gene name (one gene so annotation map not needed)
+    dplyr::rename(qend = `qend,`)
+
+CAZy_count <- dmnd_out_CAZy %>%
+  filter(classI == "AA0" | classI == "AA1" | classI == "AA1_1" | classI == "AA1_2" | classI == "AA1_3" | classI == "AA2" | classI == "AA3" | classI == "AA3_1" | classI == "AA3_2" | classI == "AA3_3" | classI == "AA4" | classI == "AA5" | classI == "AA5_1" | classI == "AA5_2" | classI == "AA6" | classI == "AA7" | classI == "AA8" | classI == "AA9" | classI == "AA10" | classI == "AA11" | classI == "AA12" | classI == "AA13" | classI == "AA14" | classI == "AA15" | classI == "AA16" | classI == "AA17") %>% 
+  dplyr::select(!c(temp, source, classII)) %>% 
+  dplyr::rename(gene = classI)
+
+# Combine the count data for all enzymes
+gene_count_combined <- rbind(N_count, ppk_count, CAZy_count)
+#write_csv(gene_count_combined, file = "data/RNA/gene_count_combined.csv")
+
+# Read in the sample info (for gene expression stuff)
+sampleinfo <- read_csv(file = "data/RNA/deseq_sampleinfo.csv") %>% 
+  dplyr::filter(!SampleName == "blank_R1") %>% 
+  mutate(treat_reactor = case_when(Reactor == 'CNS' & Treatment == 'Control' ~ 'CNS (Control)',
+                                   Reactor == 'CNS' & Treatment == 'P' ~ 'CNS (P)',
+                                   Reactor == 'CNS' & Treatment == 'P+N' ~ 'CNS (P+N)',
+                                   Reactor == 'DRW' & Treatment == 'Control' ~ 'DRW (Control)',
+                                   Reactor == 'DRW' & Treatment == 'P' ~ 'DRW (P)',
+                                   Reactor == 'DRW' & Treatment == 'P+N' ~ 'DRW (P+N)')) %>% 
+  mutate(color_condition = case_when(treat_reactor == 'CNS (Control)' ~ '#2557FF',
+                                     treat_reactor == 'CNS (P)' ~ '#56B0FF',
+                                     treat_reactor == 'CNS (P+N)' ~ '#99EAFF',
+                                     treat_reactor == 'DRW (Control)' ~ '#D8152F',
+                                     treat_reactor == 'DRW (P)' ~ '#FF7856',
+                                     treat_reactor == 'DRW (P+N)' ~ '#FFAC75')) %>% 
+  mutate(color_time = case_when(Timepoint == '24' ~ 16,
+                                Timepoint == '120' ~ 17))
+```
+
+## Differential expression analysis using (mostly) edgeR
+```{r}
+# Using a combination of these tutorials
+## https://bioinformatics-core-shared-training.github.io/RNAseq-R/rna-seq-preprocessing.nb.html
+## https://www.bioconductor.org/help/course-materials/2016/CSAMA/lab-3-rnaseq/rnaseq_gene_CSAMA2016.html#mds-plot
+
+seqdata <- gene_count_combined %>% 
+  group_by(fn, gene) %>% 
+  summarize(raw_count = n()) %>% 
+  pivot_wider(names_from = fn, values_from = raw_count) %>% 
+  as.data.frame()
+
+countdata <- seqdata[, -1] %>% 
+  dplyr::select(!blank_R1)
+
+rownames(countdata) <- seqdata[,1]
+
+# Obtain CPMs
+countdata[is.na(countdata)] <- 0
+
+genetable <- data.frame(gene.id=rownames(countdata))
+y <- DGEList(counts=countdata, 
+             samples=sampleinfo, 
+             genes=genetable)
+
+y <- calcNormFactors(y)
+plotMDS(y, top = 1000, labels = NULL, col = y$samples$color_condition, pch = y$samples$color_time, cex = 2)
+legend("topright",fill=c('#2557FF', '#56B0FF', '#99EAFF', '#D8152F', '#FF7856', '#FFAC75'),
+       legend=c('CNS (Control)', 'CNS (P)', 'CNS (P+N)', 'DRW (Control)', 'DRW (P)', 'DRW (P+N)'), title = "Reactor and Treatment")
+legend("top", pch = c(16, 17), legend = c('24 hours', '120 hours'), title = "Timepoint")
+
+## Performing differential expression testing with edgeR
+design <- model.matrix(~ Reactor + Treatment, y$samples)
+
+y <- calcNormFactors(y)
+y <- estimateDisp(y, design)
+
+fit <- glmFit(y, design)
+lrt <- glmLRT(fit, coef=ncol(design))
+tt <- topTags(lrt, n=nrow(y), p.value=0.1)
+tt10 <- topTags(lrt) # just the top 10 by default
+tt10
+
+tt.all <- topTags(lrt, n=nrow(y), sort.by="none")
+treatres <- glmTreat(fit, coef = ncol(design), lfc = 1)
+tt.treat <- topTags(treatres, n = nrow(y), sort.by = "none")
+
+# Get log2 counts per million
+logcounts <- cpm(y,log=TRUE)
+
+# Check distributions of samples using boxplots
+boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2)
+
+# Let's add a blue horizontal line that corresponds to the median logCPM
+abline(h=median(logcounts),col="blue")
+title("Boxplots of logCPMs (unnormalised)")
+
+# We estimate the variance for each row in the logcounts matrix
+var_genes <- apply(logcounts, 1, var)
+var_genes
+
+# Get the gene names for the top 33 most variable genes (because we only have 33 we don't need the "top 500")
+select_var <- names(sort(var_genes, decreasing=TRUE))[1:33]
+select_var
+
+# Subset logcounts matrix
+highly_variable_lcpm <- logcounts[select_var,]
+
+## Make a heatmap (different type of plot with z-scores??)
+mypalette <- brewer.pal(11,"RdYlBu")
+morecols <- colorRampPalette(mypalette)
+
+heatmap.2(highly_variable_lcpm, 
+          col=rev(morecols(50)),
+          trace="column", 
+          main="Genes variation across samples",scale="row", margins = c(8,4))
+```
+
+#### Plotting the heatmap (with pheatmap)
+```{r}
+# Annotation reorder for columns (samples)
+anno_col <- data.frame(SampleName = sampleinfo$SampleName, 
+                   Timepoint = sampleinfo$Timepoint,
+                   Treatment = sampleinfo$Treatment, 
+                   Reactor = sampleinfo$Reactor)
+
+rownames(anno_col) <- anno_col$SampleName
+anno_col <- subset(anno_col, select = -SampleName)
+anno_col_reorder <- anno_col[order(anno_col$Reactor), ]
+
+ann_colors = list(Reactor = c("CNS" = "black","DRW" = "grey"),
+                  Treatment = c("Control" = "goldenrod", "P" = "deepskyblue3", "P+N" = "red3"),
+                  Timepoint = c("24" = "darkorchid3", "120" = "green3"))
+
+# Reorder the list of genes
+gene_list <- c("AA0", "AA1", "AA1_1", "AA1_2", "AA1_3", "AA2", "AA3", "AA3_1", "AA3_2", "AA3_3", "AA4", "AA5", "AA5_1", "AA5_2", "AA6", "AA7", "AA8", "AA9", "AA10", "AA11", "AA12", "AA14", "AA15", "AA16", "AA17", "Nap", "Nar", "NirK", "NirS", "cNor", "qNor", "NosZ", "ppk")
+
+highly_variable_lcpm <- highly_variable_lcpm[gene_list, ]
+
+# plot it (without z-scores - max/min raw expression levels)
+pheatmap(highly_variable_lcpm,
+         annotation_col = anno_col_reorder, annotation_colors = ann_colors, 
+         cluster_cols = FALSE, cluster_rows = FALSE,
+         color = rev(brewer.pal(n = 6, name = "RdBu")))
+
+
+# plot it (with z-scores - use this for manuscript!!!!!)
+z <- t(scale(t(highly_variable_lcpm)))
+
+pheatmap(z,
+         annotation_col = anno_col_reorder, annotation_colors = ann_colors, 
+         cluster_cols = FALSE, cluster_rows = FALSE,
+         color = rev(brewer.pal(n = 6, name = "RdBu")))
+
+# plot it (log2 fold change)
+log2foldchange <- log2(highly_variable_lcpm)
+
+pheatmap(log2foldchange,
+         annotation_col = anno_col_reorder, annotation_colors = ann_colors, 
+         cluster_cols = FALSE, cluster_rows = FALSE,
+         color = rev(brewer.pal(n = 6, name = "RdBu")))
+
+
+
+# try trimming out any low ones from the dot charts
+trim <- highly_variable_lcpm %>% 
+  as.data.frame() %>% 
+  rownames_to_column("genes") %>% 
+  as_tibble() %>% 
+  filter(genes == "Nap" | genes == "Nar" | genes == "NirK" | genes == "qNor" | genes == "AA0" | genes == "AA1" | genes == "AA1.1" | genes == "AA1.2" | genes == "AA2" | genes == "AA3" | genes == "AA3.2" | genes == "AA4" | genes == "AA5" | genes == "AA5.1" | genes == "AA6" | genes == "ppk") %>% 
+  column_to_rownames("genes")
+
+pheatmap(trim, scale = "none",
+         annotation_col = anno_col_reorder, annotation_colors = ann_colors, 
+         cluster_cols = FALSE, cluster_rows = FALSE,
+         color = rev(brewer.pal(n = 6, name = "PuOr")))
+```
+
+
+
+
+
+############## NOT USED ################
+
+## DESeq
+
+### Prepare count data
+```{r}
+library(DESeq2)
+
+#counts data
+cts <- dmnd_out_ppk %>%
+  group_by(fn) %>%
+  summarize(raw.count = n()) %>%
+  pivot_wider(names_from = fn, values_from = raw.count) %>% 
+  data.frame
+
+ppk <- "ppk"
+
+rownames(cts) <- ppk
+
+counts_data <- cts #%>% 
+  #select(!c(hf_cs_p2_t0_h0_prok, hf_cs_p2_t10_h100_prok))
+
+#sample info
+sampleinfo <- read_count_ppk %>% 
+  select(!c(port, timepoint)) %>% 
+  data.frame
+
+rownames(sampleinfo) <- sampleinfo$fn
+
+coldata <- sampleinfo %>% 
+  select(!fn) #%>% 
+  #filter(condition == "drw")
+```
+
+### check data
+```{r}
+# make sure the row names in coldata match the column names in counts_data
+all(colnames(counts_data) %in% rownames(coldata))
+
+# make sure they are also in the same order
+all(colnames(counts_data) == rownames(coldata))
+```
+
+### construct a DESeqDataSet object
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts_data,
+                              colData = coldata,
+                              design = ~ condition)
+
+dds
+```
+
+### set the factor level
+```{r}
+#dds$hours_cat <- relevel(dds$hours_cat, ref = "A")
+
+dds$condition <- relevel(dds$condition, ref = "cs")
+```
+
+### Run DESeq2
+```{r}
+#dds <- DESeq(dds)
+dds <- estimateSizeFactors(dds)
+dds <- estimateDispersionsGeneEst(dds)
+dispersions(dds) <- mcols(dds)$dispGeneEst
+
+
+
+res <- results(dds)
+```
+
+
+### Explore results
+```{r}
+res
+```
+

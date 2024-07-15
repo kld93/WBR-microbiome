@@ -50,7 +50,7 @@ dmnd_out_ppk <- dmnd_out_ppk %>%
 
 ### Read in the metadata (i.e., read counts)
 ```{r}
-read_count_ppk = read.csv("C:/Users/Katie/Documents/WBR-microbiome/data/Phil_sampleinfo.csv")
+read_count_ppk = read.csv("data/Phil_sampleinfo.csv")
 ```
 
 ### Join the two dataframes together
@@ -84,7 +84,13 @@ dmnd_ppk %>%
 dmnd_ppk %>% 
   ggplot(aes(x = hours_after_start, y = raw.count, color = condition)) +
   geom_line() +
-  labs(x = "Time from start (hours)", y = "Reads per million mapped to ppk", color = "Bioreactor\nCondition")
+  labs(x = "Time from start (hours)", y = "Reads per million mapped to ppk", color = "Bioreactor\nCondition") +
+  theme_classic() +
+  theme(axis.text = element_text(size = 12), 
+        axis.title = element_text(size = 12), 
+        legend.text = element_text(size = 10), 
+        legend.title = element_text(size = 12), 
+        strip.text = element_text(size = 12))  
 ```
 
 

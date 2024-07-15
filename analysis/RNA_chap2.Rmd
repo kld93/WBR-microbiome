@@ -252,37 +252,45 @@ d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0", "AA1", "AA1.1", "AA
 
 ### Create the dot charts
 ```{r}
-# N cycle and ppk together
+# N cycle and ppk together fct_reorder(taxon_name, percent)
+d3_N_ppk$Timepoint <- factor(d3_N_ppk$Timepoint, levels=c('24', '120'))
+
 d3_N_ppk %>% 
   ggplot(aes(median, Reactor, color = Timepoint)) +
   geom_point() +
   #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
   geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
   facet_grid(ord ~ Treatment) +
-  scale_color_manual(values = c("red3", "deepskyblue3")) +
+  scale_color_manual(values = c("deepskyblue3", "red3")) +
   theme(panel.background = element_rect(fill = "white"), 
         panel.grid.major.x = element_blank(), 
         strip.background = element_rect(fill = "grey"), 
         panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
         legend.position ="bottom", 
+        legend.margin=margin(0,0,0,0),
         axis.text.y = element_text(size = 10)) +
-  labs(x = "Reads per million total reads", y = "Hours post DRW reactor re-flood")
+  xlim(c(0,200)) +
+  labs(x = "Reads per million total reads", y = "Reactor")
 
 # CAZY
+d3_CAZy_avg$Timepoint <- factor(d3_CAZy_avg$Timepoint, levels=c('24', '120'))
+
 d3_CAZy_avg %>% 
   ggplot(aes(median, Reactor, color = Timepoint)) +
   geom_point() +
   #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +
   geom_errorbarh(aes(xmax = upper_lim, xmin = lower_lim, height = .5)) +
   facet_grid(ord ~ Treatment) +
-  scale_color_manual(values = c("red3", "deepskyblue3")) +
+  scale_color_manual(values = c("deepskyblue3", "red3")) +
   theme(panel.background = element_rect(fill = "white"), 
         panel.grid.major.x = element_blank(), 
         strip.background = element_rect(fill = "grey"), 
         panel.grid.major.y = element_line(linetype=3, color = "dark grey"), 
         legend.position ="bottom", 
+        legend.margin=margin(0,0,0,0),
         axis.text.y = element_text(size = 10)) +
-  labs(x = "Reads per million total reads", y = "Hours post DRW reactor re-flood")
+  xlim(c(0,200)) +
+  labs(x = "Reads per million total reads", y = "Reactor")
 ```
 
 ### Create similar plot for nutrient concentrations
@@ -677,7 +685,7 @@ ppk_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12),
+  theme(axis.text = element_text(size = 10),
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -698,7 +706,7 @@ nap_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -719,7 +727,7 @@ nar_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -740,7 +748,7 @@ nirk_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -761,7 +769,7 @@ qnor_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -782,7 +790,7 @@ AA0_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -803,7 +811,7 @@ AA1_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -824,7 +832,7 @@ AA1.1_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -844,7 +852,7 @@ AA1.2_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -865,7 +873,7 @@ AA2_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -886,7 +894,7 @@ AA3_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -907,7 +915,7 @@ AA3.2_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -928,7 +936,7 @@ AA4_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -949,7 +957,7 @@ AA5_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -970,7 +978,7 @@ AA5.1_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -991,7 +999,7 @@ AA6_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -1012,7 +1020,7 @@ AA10_taxplot <- kaiju_compiled %>%
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +
   #theme_classic() +
-  theme(axis.text = element_text(size = 12), 
+  theme(axis.text = element_text(size = 10), 
         legend.position = "none",
         axis.title = element_text(size = 12), 
         legend.text = element_text(size = 10), 
@@ -1055,6 +1063,14 @@ ggarrange(nap_taxplot, nar_taxplot, nirk_taxplot, qnor_taxplot,
                      "AA1.2", "AA2", "AA3", "AA3.2", "AA4", "AA5", "AA5.1", "AA6", "ppk"),
           common.legend = FALSE)
 
+ggarrange(nap_taxplot, nar_taxplot, nirk_taxplot, qnor_taxplot,
+          AA0_taxplot, AA1_taxplot, AA1.1_taxplot, AA1.2_taxplot, 
+          AA2_taxplot, AA3_taxplot, AA3.2_taxplot, AA4_taxplot, 
+          AA5_taxplot, AA5.1_taxplot, AA6_taxplot, ppk_taxplot, ncol = 3, nrow = 6,
+          labels = c("nap", "nar", "nirK", "qNor", "AA0", "AA1", "AA1.1", 
+                     "AA1.2", "AA2", "AA3", "AA3.2", "AA4", "AA5", "AA5.1", "AA6", "ppk"),
+          common.legend = FALSE)
+
 par(mar = c(1, 1, 1, 1))
 plot(NULL, xaxt='n', yaxt='n', ylab='', xlab='', bty='n', xlim=c(0,1), ylim=c(0,1))
 legend("topleft", ncol = 2, legend =c('Proteobacteria', 'Actinobacteria', 'Unclassified/Unassigned', 'Ascomycota', 'Basidiomycota', 'Firmicutes', 'Bacteroidetes', 'Mucoromycota', 'Chloroflexi', 'Acidobacteria', 'Verrucomicrobia', 'Candidatus Rokubacteria', 'Deinococcus-Thermus', 'Candidate Division NC10', 'Euryarchaeota', 'Planctomycetes', 'Candidatus Handelsmanbacteria', 'Chlorophyta', 'Chytridiomycota', 'Ciliophora', 'Euglenozoa', 'Foraminifera', 'Perkinsozoa', 'Apicomplexa', 'Haptophyta', 'Heterolobosea', 'Microsporidia', 'Bacillariophyta', 'Nitrospirae', 'Oomycota', 'Parabasalia', 'Evosea', 'Rhodophyta', 'Zoopagomycota', 'Cyanobacteria', 'Cercozoa', 'Fornicata', 'Imbricatea', 'Viruses'), pch=15, pt.cex=3, cex=1.2, bty='n',
@@ -1072,13 +1088,13 @@ phyla_combined <- rbind(CNS_phyla, DRW_phyla)
 
 phyla_combined %>% 
   mutate(percent = (reads/total)*100) %>% 
-  filter(percent > 2) %>% 
+  filter(percent > 1) %>% 
   ggplot(aes(x = reactor, y = percent, fill = fct_reorder(taxon_name, percent))) +
   geom_bar(stat = "identity", position = "fill") +
   guides(fill = guide_legend(reverse=TRUE)) +
   facet_grid(timepoint~treatment) +
   scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(values=as.vector(stepped(16))) +
+  scale_fill_manual(values=rev(as.vector(stepped2(20)))) +
   xlab("Reactor") +
   ylab("Relative Abundance") +
   labs(fill = "Phylum") +

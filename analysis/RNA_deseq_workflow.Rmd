@@ -300,15 +300,26 @@ gene_list <- c("AA0", "AA1", "AA1_1", "AA1_2", "AA1_3", "AA2", "AA3", "AA3_1", "
 
 highly_variable_lcpm <- highly_variable_lcpm[gene_list, ]
 
+
+## reorder the list of samples
+sample_list <- c("CNS_C_24_R1", "CNS_C_24_R2", "CNS_C_120_R1", "CNS_C_120_R2", "CNS_P_24_R1", "CNS_P_24_R2", "CNS_P_120_R1", "CNS_P_120_R2", "CNS_N_24_R1", "CNS_N_24_R2", "CNS_N_120_R1", "CNS_N_120_R2", "DRW_C_24_R1", "DRW_C_24_R2", "DRW_C_120_R1", "DRW_C_120_R2", "DRW_P_24_R1", "DRW_P_24_R2", "DRW_P_120_R1", "DRW_P_120_R2", "DRW_N_24_R1", "DRW_N_24_R2", "DRW_N_120_R1", "DRW_N_120_R2")
+
+flipped <- t(highly_variable_lcpm)
+
+flipped_reorder <- flipped[sample_list, ] 
+
+highly_variable_corrected <- t(flipped_reorder)
+
+
 # plot it (without z-scores - max/min raw expression levels)
-pheatmap(highly_variable_lcpm,
+pheatmap(highly_variable_corrected,
          annotation_col = anno_col_reorder, annotation_colors = ann_colors, 
          cluster_cols = FALSE, cluster_rows = FALSE,
          color = rev(brewer.pal(n = 6, name = "RdBu")))
 
 
 # plot it (with z-scores - use this for manuscript!!!!!)
-z <- t(scale(t(highly_variable_lcpm)))
+z <- t(scale(t(highly_variable_corrected)))
 
 pheatmap(z,
          annotation_col = anno_col_reorder, annotation_colors = ann_colors, 
@@ -316,7 +327,7 @@ pheatmap(z,
          color = rev(brewer.pal(n = 6, name = "RdBu")))
 
 # plot it (log2 fold change)
-log2foldchange <- log2(highly_variable_lcpm)
+log2foldchange <- log2(highly_variable_corrected)
 
 pheatmap(log2foldchange,
          annotation_col = anno_col_reorder, annotation_colors = ann_colors, 
@@ -324,6 +335,7 @@ pheatmap(log2foldchange,
          color = rev(brewer.pal(n = 6, name = "RdBu")))
 
 
+ 
 
 # try trimming out any low ones from the dot charts
 trim <- highly_variable_lcpm %>% 

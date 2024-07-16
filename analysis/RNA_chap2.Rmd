@@ -294,10 +294,27 @@ d3_CAZy_avg %>%
 
 ## numbers for paper:
 CAZy_N_ppk <- rbind(d3_CAZy_avg, d3_N_ppk) 
+
 CAZy_N_ppk %>% 
   select(c(Treatment, Reactor, Timepoint, upper_lim, rename)) %>% 
   group_by(rename) %>% 
   summarize(max = max(upper_lim)) %>% 
+  View()
+
+CAZy_N_ppk %>% 
+  filter(Timepoint == "24") %>% 
+  View()
+
+CAZy_N_ppk %>% 
+  filter(gene == "ppk") %>% 
+  View()
+
+CAZy_N_ppk %>% 
+  filter(rename == "Nap") %>% 
+  View()
+
+CAZy_N_ppk %>% 
+  filter(rename == "NirK" | rename == "NirS") %>% 
   View()
 ```
 

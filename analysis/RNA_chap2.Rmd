@@ -291,6 +291,14 @@ d3_CAZy_avg %>%
         axis.text.y = element_text(size = 10)) +
   xlim(c(0,200)) +
   labs(x = "Reads per million total reads", y = "Reactor")
+
+## numbers for paper:
+CAZy_N_ppk <- rbind(d3_CAZy_avg, d3_N_ppk) 
+CAZy_N_ppk %>% 
+  select(c(Treatment, Reactor, Timepoint, upper_lim, rename)) %>% 
+  group_by(rename) %>% 
+  summarize(max = max(upper_lim)) %>% 
+  View()
 ```
 
 ### Create similar plot for nutrient concentrations

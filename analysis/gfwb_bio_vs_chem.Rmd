@@ -228,8 +228,8 @@ control_plot <- tidyset %>%
   ggplot(aes(x = hours_after_start, y = P, color = reactor)) + 
   geom_line(size = 1) +
   scale_x_continuous(breaks = breaks_C, labels = timepoints_C) +
-  #facet_wrap(~treatment, ncol = 1) +
-  geom_vline(xintercept = c(120, 168, 288), color="#BB0000", linetype="dashed") +
+  #facet_wrap(~cycle) +
+  geom_vline(xintercept = c(120, 168), color="#BB0000", linetype="dashed") +
   theme_classic() +
   labs(color = "Reactor:", title = "Control") +
   ylim(c(0,0.3)) +
@@ -254,7 +254,7 @@ P_plot <- tidyset %>%
   geom_line(size = 1) +
   scale_x_continuous(breaks = breaks_P, labels = timepoints_P) +
   #facet_wrap(~treatment, ncol = 1) +
-  geom_vline(xintercept = c(456, 504, 624), color="#BB0000", linetype="dashed") +
+  geom_vline(xintercept = c(456, 504), color="#BB0000", linetype="dashed") +
   theme_classic() +
   labs(color = "Reactor:", title = "P") +
   ylim(c(0,0.3)) +
@@ -279,7 +279,7 @@ NP_plot <- tidyset %>%
   geom_line(size = 1) +
   scale_x_continuous(breaks = breaks_N, labels = timepoints_N) +
   #facet_wrap(~treatment, ncol = 1) +
-  geom_vline(xintercept = c(792, 840, 960), color="#BB0000", linetype="dashed") +
+  geom_vline(xintercept = c(792, 840), color="#BB0000", linetype="dashed") +
   theme_classic() +
   labs(color = "Reactor:", title = "P+N") +
   ylim(c(0,0.3)) +

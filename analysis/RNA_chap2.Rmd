@@ -155,6 +155,98 @@ dmnd_out_CAZy <- dmnd_out_CAZy %>%
   mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
   mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
   mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
+
+
+##### Adding in the anammox genes (hzsA and hzo)
+## hzsA
+dmnd_out_hzsA <- read_csv("data/RNA/chap2_readVrefs_hzsA.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend,", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+dmnd_out_hzsA <- dmnd_out_hzsA %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "139_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "140_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "141_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "142_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "147_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "148_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "149_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "150_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "39_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "40_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "41_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "42_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "47_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "48_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "49_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "50_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "89_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "90_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "91_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "92_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "97_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
+
+## hzo
+dmnd_out_hzo <- read_csv("data/RNA/chap2_readVrefs_hzo.csv", 
+                  col_types = "ccdiiiiiiiddc", 
+                  col_names = c("query", 
+                                "subject", 
+                                "pid",
+                                "aln_len", 
+                                "mismatches", 
+                                "gaps", 
+                                "qstart", 
+                                "qend,", 
+                                "sstart", 
+                                "send", 
+                                "e-value", 
+                                "bit", 
+                                "fn")) %>%
+    filter(pid >= 60, aln_len > 25)
+
+dmnd_out_hzo <- dmnd_out_hzo %>% 
+  mutate(fn = ifelse(fn == "./100_trim_cut_181049_201_1.out.daa", "100_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./139_trim_cut_181049_226_1.out.daa", "139_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./140_trim_cut_181049_261_1.out.daa", "140_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./141_trim_cut_181049_219_1.out.daa", "141_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./142_trim_cut_181049_225_1.out.daa", "142_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./147_trim_cut_181049_231_1.out.daa", "147_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./148_trim_cut_181049_220_1.out.daa", "148_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./149_trim_cut_181049_224_1.out.daa", "149_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./150_trim_cut_181049_233_1.out.daa", "150_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./39_trim_cut_181049_183_1.out.daa", "39_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./40_trim_cut_181049_195_1.out.daa", "40_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./41_trim_cut_181049_188_1.out.daa", "41_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./42_trim_cut_181049_194_1.out.daa", "42_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./47_trim_cut_181049_190_1.out.daa", "47_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./48_trim_cut_181049_192_1.out.daa", "48_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./49_trim_cut_181049_186_1.out.daa", "49_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./50_trim_cut_181049_187_1.out.daa", "50_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./89_trim_cut_181049_216_1.out.daa", "89_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./90_trim_cut_181049_214_1.out.daa", "90_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./91_trim_cut_181049_205_1.out.daa", "91_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./92_trim_cut_181049_203_1.out.daa", "92_trim_cut", fn)) %>% 
+  mutate(fn = ifelse(fn == "./97_trim_cut_181049_210_1.out.daa", "97_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./98_trim_cut_181049_204_1.out.daa", "98_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./99_trim_cut_181049_211_1.out.daa", "99_trim_cut", fn)) %>%
+  mutate(fn = ifelse(fn == "./blank_trim_cut_181049_223_1.out.daa", "blank_trim_cut", fn))
 ```
 
 ### Read in the metadata (i.e., read counts)
@@ -183,6 +275,22 @@ dmnd_ppk <-  dmnd_out_ppk %>%
     left_join(read_count) %>%
     mutate(norm.count = (raw.count/count) * 1000000) %>% 
     mutate(gene = "ppk") %>% # Add column with gene name (one gene so annoation map not needed)
+    filter(!fn == "blank_trim_cut")
+
+dmnd_hzsA <-  dmnd_out_hzsA %>%
+    group_by(fn) %>%
+    summarize(raw.count = n()) %>% #sums up the rows for each sample
+    left_join(read_count) %>%
+    mutate(norm.count = (raw.count/count) * 1000000) %>% 
+    mutate(gene = "hzsA") %>% # Add column with gene name (one gene so annoation map not needed)
+    filter(!fn == "blank_trim_cut")
+
+dmnd_hzo <-  dmnd_out_hzo %>%
+    group_by(fn) %>%
+    summarize(raw.count = n()) %>% #sums up the rows for each sample
+    left_join(read_count) %>%
+    mutate(norm.count = (raw.count/count) * 1000000) %>% 
+    mutate(gene = "hzo") %>% # Add column with gene name (one gene so annoation map not needed)
     filter(!fn == "blank_trim_cut")
 
 dmnd_CAZy <- dmnd_out_CAZy %>%
@@ -221,6 +329,20 @@ d3_ppk = dplyr::group_by(dmnd_ppk, gene, Treatment, Reactor, Timepoint)
 
 d3_ppk_avg = dplyr::summarize(d3_ppk, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
 
+## hzsA
+d3_hzsA = dplyr::group_by(dmnd_hzsA, gene, Treatment, Reactor, Timepoint)
+
+#d3_hzsA_avg = dplyr::summarize(d3_hzsA, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_hzsA_avg = dplyr::summarize(d3_hzsA, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
+
+## hzo
+d3_hzo = dplyr::group_by(dmnd_hzo, gene, Treatment, Reactor, Timepoint)
+
+#d3_hzo_avg = dplyr::summarize(d3_hzo, mean = mean(norm.count), sd = sd(norm.count))
+
+d3_hzo_avg = dplyr::summarize(d3_hzo, median = median(norm.count), upper_lim = max(norm.count), lower_lim = min(norm.count))
+
 ## CAZy
 d3_CAZy = dplyr::group_by(d2_CAZy, classI, Treatment, Reactor, Timepoint)
 
@@ -240,12 +362,14 @@ d3_CAZy_avg$rename = c("AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "AA0", "
 ```{r}
 d3_ppk_avg
 d3_N_avg
+d3_hzsA_avg
+d3_hzo_avg
 
-d3_N_ppk <- rbind(d3_N_avg, d3_ppk_avg)
+d3_N_ppk_hzsA_hzo <- rbind(d3_N_avg, d3_ppk_avg, d3_hzsA_avg, d3_hzo_avg)
 
-d3_N_ppk$rename = c("Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "cNor", "cNor", "cNor", "cNor", "cNor", "cNor", "cNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk")
+d3_N_ppk_hzsA_hzo$rename = c("Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nap", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "Nar", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirK", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NirS", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "NosZ", "cNor", "cNor", "cNor", "cNor", "cNor", "cNor", "cNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "qNor", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "ppk", "hzsA", "hzsA", "hzsA", "hzsA", "hzsA", "hzsA", "hzo", "hzo", "hzo", "hzo", "hzo")
 
-d3_N_ppk$ord = factor(d3_N_ppk$rename, levels=c("Nap","Nar","NirK","NirS","cNor","qNor","NosZ", "ppk"))
+d3_N_ppk_hzsA_hzo$ord = factor(d3_N_ppk_hzsA_hzo$rename, levels=c("Nap","Nar","NirK","NirS","cNor","qNor","NosZ", "hzsA", "hzo", "ppk"))
 
 d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0", "AA1", "AA1.1", "AA1.2", "AA1.3", "AA2", "AA3", "AA3.1", "AA3.2", "AA3.3", "AA4", "AA5", "AA5.1", "AA5.2", "AA6", "AA7", "AA8", "AA9", "AA10", "AA11", "AA12", "AA13", "AA14", "AA15", "AA16", "AA17"))
 ```
@@ -253,9 +377,9 @@ d3_CAZy_avg$ord = factor(d3_CAZy_avg$rename, levels=c("AA0", "AA1", "AA1.1", "AA
 ### Create the dot charts
 ```{r}
 # N cycle and ppk together fct_reorder(taxon_name, percent)
-d3_N_ppk$Timepoint <- factor(d3_N_ppk$Timepoint, levels=c('24', '120'))
+d3_N_ppk_hzsA_hzo$Timepoint <- factor(d3_N_ppk_hzsA_hzo$Timepoint, levels=c('24', '120'))
 
-d3_N_ppk %>% 
+d3_N_ppk_hzsA_hzo %>% 
   ggplot(aes(median, Reactor, color = Timepoint)) +
   geom_point() +
   #geom_errorbarh(aes(xmax = mean + sd, xmin = mean - sd, height = .5)) +

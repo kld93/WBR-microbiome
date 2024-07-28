@@ -4,6 +4,7 @@
 .Ruserdata
 /data/*.FASTQ.zip
 /data/*.fa
+/data/*.fas
 /data/*.m8
 /data/*.kaijuReport
 /data/data_from_kbase

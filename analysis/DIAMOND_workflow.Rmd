@@ -461,3 +461,118 @@ tmux
 #move readVrefs.m8 to home so you can move via Filezilla to local computer
 ```
 
+#### Anammox genes (hszA and hzo)
+
+hzsA:
+```{bash}
+#use this directory
+cd kbase/forDIAMOND/forHZSA
+
+#make ".fa" database file machine readable
+/programs/diamond-0.9.24/diamond makedb --in hzsA.fas -d hzsA
+
+#use text editor to create loop for diamond (save as "diamond.sh")
+##may need to change the file type, names, and "64" depending on which core machine you use
+nano
+
+#copy the following code and paste into nano text editor:
+set -e
+set -u
+set -o pipefail
+array=($(ls ./*.fastq)) 
+echo ${array[@]}
+for file in ${array[@]};
+do
+    results="$(basename $file .fastq).out"
+    /programs/diamond-0.9.24/diamond blastx -d  hzsA.dmnd -q ${file} -p 64 -e 1e-3 -k 1 -a ./$results
+done;
+##type ctrlX to exit, Y for yes to save, name "diamond.sh"
+
+#if you need to edit script:
+##just run nano again, make changes in R and re-paste into nano, then save/overwrite (this way you won't have to make it executable again, it already is)
+
+#to make the diamond.sh file executable
+chmod u+x diamond.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+## run in tmux
+tmux
+tmux a -t 0 #to open the terminal later (ctrl+b,d to return to main screen)
+
+#to run it:
+./diamond.sh
+
+#use text editor to create daa file
+nano #to make a new one
+
+for f in ./*.daa; do \
+    /programs/diamond-0.9.24/diamond view -a $f | awk -v fn="$f" -F"\t" 'BEGIN {OFS = FS} {print $0, fn}';  
+done > readVrefs.m8
+##save it as daa.sh
+
+#make it executable
+chmod u+x daa.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+#to run it:
+./daa.sh
+
+#move readVrefs.m8 to home so you can move via Filezilla to local computer
+```
+
+hzo:
+```{bash}
+#use this directory
+cd kbase/forDIAMOND/forHZO
+
+#make ".fa" database file machine readable
+/programs/diamond-0.9.24/diamond makedb --in hzo.fas -d hzo
+
+#use text editor to create loop for diamond (save as "diamond.sh")
+##may need to change the file type, names, and "64" depending on which core machine you use
+nano
+
+#copy the following code and paste into nano text editor:
+set -e
+set -u
+set -o pipefail
+array=($(ls ./*.fastq)) 
+echo ${array[@]}
+for file in ${array[@]};
+do
+    results="$(basename $file .fastq).out"
+    /programs/diamond-0.9.24/diamond blastx -d  hzo.dmnd -q ${file} -p 64 -e 1e-3 -k 1 -a ./$results
+done;
+##type ctrlX to exit, Y for yes to save, name "diamond.sh"
+
+#if you need to edit script:
+##just run nano again, make changes in R and re-paste into nano, then save/overwrite (this way you won't have to make it executable again, it already is)
+
+#to make the diamond.sh file executable
+chmod u+x diamond.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+## run in tmux
+tmux
+tmux a -t 0 #to open the terminal later (ctrl+b,d to return to main screen)
+
+#to run it:
+./diamond.sh
+
+#use text editor to create daa file
+nano #to make a new one
+
+for f in ./*.daa; do \
+    /programs/diamond-0.9.24/diamond view -a $f | awk -v fn="$f" -F"\t" 'BEGIN {OFS = FS} {print $0, fn}';  
+done > readVrefs.m8
+##save it as daa.sh
+
+#make it executable
+chmod u+x daa.sh
+#run ls -l to check that it's now an executable (will be green and have -x---)
+
+#to run it:
+./daa.sh
+
+#move readVrefs.m8 to home so you can move via Filezilla to local computer
+```
